@@ -112,10 +112,10 @@
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-person-running text-rose-400"></i> Atlas 3D BioDigital Human: Disección & Capas
+            <i class="fa-solid fa-person-running text-rose-400"></i> Atlas 3D: Disección por Capas
           </h2>
           <p class="text-xs md:text-sm text-slate-400">
-            Explorador anatómico oficial de BioDigital. Toca cualquier músculo, hueso o vaso directamente en el visor para seleccionarlo, diseccionarlo y ver su nombre clínico.
+            Usa el <strong>slider de opacidad</strong> a la izquierda del visor para ir quitando capas: piel &rarr; músculo &rarr; esqueleto &rarr; órganos &rarr; vasos &rarr; nervios. Busca cualquier estructura por nombre con la lupa.
           </p>
         </div>
         <div class="flex items-center gap-2">
@@ -125,46 +125,46 @@
         </div>
       </div>
 
-      <!-- Selector de Sistemas y Capas de BioDigital -->
-      <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex flex-wrap gap-2 text-xs">
-          <button onclick="setBioDigitalSystem('muscles')" id="btn-bio-muscles" class="px-3.5 py-2 rounded-xl font-bold bg-rose-600 text-white transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-person-running"></i> 1. Sistema Muscular Completo
-          </button>
-          <button onclick="setBioDigitalSystem('skeleton')" id="btn-bio-skeleton" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-bone"></i> 2. Esqueleto & Columna
-          </button>
-          <button onclick="setBioDigitalSystem('cardio')" id="btn-bio-cardio" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-heart-pulse"></i> 3. Corazón & Circulación
-          </button>
-          <button onclick="setBioDigitalSystem('willis')" id="btn-bio-willis" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-diagram-project"></i> 4. Polígono de Willis
-          </button>
-          <button onclick="setBioDigitalSystem('neuro')" id="btn-bio-neuro" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-brain"></i> 5. Sistema Nervioso
-          </button>
-        </div>
-      </div>
-
       <div class="grid lg:grid-cols-3 gap-6">
-        <!-- Contenedor del Visor 3D BioDigital Human -->
+        <!-- Visor 3D único, con todas las capas del cuerpo integradas -->
         <div class="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-2xl p-2 relative shadow-2xl overflow-hidden flex flex-col">
-          <div class="w-full h-[500px] md:h-[600px] relative bg-slate-950 rounded-xl overflow-hidden">
+          <div class="w-full h-[550px] md:h-[650px] relative bg-slate-950 rounded-xl overflow-hidden">
             <iframe id="biodigital-iframe"
               class="w-full h-full border-0 rounded-xl"
-              src="https://sketchfab.com/models/991eb96938be4d0d8fadee241a1063d3/embed?ui_theme=dark&autostart=1"
+              src="https://www.zygotebody.com/"
               allow="autoplay; fullscreen; xr-spatial-tracking"
               allowfullscreen>
             </iframe>
           </div>
           <p class="text-[10px] text-slate-500 px-1 pt-1">
-            Modelo 3D cortesía de <a id="model-source-link" href="#" target="_blank" class="text-indigo-400 hover:underline">Sketchfab (licencia Creative Commons)</a>.
+            Visor cortesía de <a href="https://www.zygotebody.com/" target="_blank" class="text-indigo-400 hover:underline">ZygoteBody</a> (gratis, sucesor de Google Body).
           </p>
         </div>
 
-        <!-- Panel Lateral: Ficha Descriptiva, Inervación & Examen Oral -->
+        <!-- Panel Lateral: Ficha de Estudio (independiente del visor) -->
         <div class="space-y-4 flex flex-col justify-between">
           <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <div>
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Ficha de estudio rápido:</label>
+              <div class="flex flex-wrap gap-1.5 text-xs">
+                <button onclick="setBioDigitalSystem('muscles')" id="btn-bio-muscles" class="px-3 py-1.5 rounded-lg font-bold bg-rose-600 text-white transition shadow flex items-center gap-1.5">
+                  <i class="fa-solid fa-person-running"></i> Muscular
+                </button>
+                <button onclick="setBioDigitalSystem('skeleton')" id="btn-bio-skeleton" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-bone"></i> Esqueleto
+                </button>
+                <button onclick="setBioDigitalSystem('cardio')" id="btn-bio-cardio" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-heart-pulse"></i> Cardio
+                </button>
+                <button onclick="setBioDigitalSystem('willis')" id="btn-bio-willis" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-diagram-project"></i> Willis
+                </button>
+                <button onclick="setBioDigitalSystem('neuro')" id="btn-bio-neuro" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-brain"></i> Nervioso
+                </button>
+              </div>
+            </div>
+
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
               <span id="layer-badge" class="text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-950/80 px-3 py-1 rounded-full border border-rose-800">
                 Sistema Musculoesquelético
@@ -174,9 +174,7 @@
 
             <div>
               <h3 id="layer-title" class="text-xl font-bold text-white mb-1">Sistema Muscular Humano Completo</h3>
-              <p id="layer-desc" class="text-xs text-slate-300 leading-relaxed">
-                Toca cualquier músculo dentro del visor BioDigital para seleccionarlo. En esta ficha puedes revisar inserciones y correlaciones para tu examen oral.
-              </p>
+              <p id="layer-desc" class="text-xs text-slate-300 leading-relaxed"></p>
             </div>
 
             <!-- Botones de Estructuras Específicas -->
@@ -195,10 +193,10 @@
 
           <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5">
             <h4 class="text-xs font-bold text-slate-200 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-hand-pointer text-emerald-400"></i> Herramientas de BioDigital:
+              <i class="fa-solid fa-hand-pointer text-emerald-400"></i> Cómo usar el visor:
             </h4>
             <p class="text-[11px] text-slate-400 leading-relaxed">
-              <strong>Tocar estructura:</strong> Selecciona y resalta el músculo &bull; <strong>Herramienta Disección (Bisturí):</strong> Oculta planos superficiales para ver los profundos &bull; <strong>Rotar:</strong> 1 dedo / Clic.
+              <strong>Slider de opacidad:</strong> revela u oculta capas gradualmente &bull; <strong>Buscar:</strong> escribe el nombre de una estructura arriba a la derecha &bull; <strong>Clic:</strong> selecciona y muestra el nombre &bull; <strong>Ctrl+clic:</strong> oculta esa estructura.
             </p>
           </div>
         </div>
@@ -875,17 +873,11 @@ graph TD
       currentStructureIndex = 0;
 
       document.querySelectorAll('[id^="btn-bio-"]').forEach(btn => {
-        btn.className = 'px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+        btn.className = 'px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5';
       });
 
       const data = bioDigitalDB[key];
-      document.getElementById(`btn-bio-${key}`).className = `px-3.5 py-2 rounded-xl font-bold ${data.btnColor} transition shadow flex items-center gap-1.5`;
-
-      const iframe = document.getElementById('biodigital-iframe');
-      if (iframe) iframe.src = data.embedUrl;
-
-      const sourceLink = document.getElementById('model-source-link');
-      if (sourceLink) sourceLink.href = data.sourceUrl;
+      document.getElementById(`btn-bio-${key}`).className = `px-3 py-1.5 rounded-lg font-bold ${data.btnColor} transition shadow flex items-center gap-1.5`;
 
       document.getElementById('layer-badge').textContent = data.badge;
       document.getElementById('layer-badge').className = `text-xs font-bold uppercase tracking-wider ${data.badgeColor} px-3 py-1 rounded-full border`;
