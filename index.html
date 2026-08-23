@@ -83,6 +83,10 @@
           <i class="fa-solid fa-file-waveform"></i>
           <span>Simulador Oral</span>
         </button>
+        <button onclick="switchTab('quiz')" id="nav-quiz" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-list-check text-teal-400"></i>
+          <span>Banco de Preguntas</span>
+        </button>
         <button onclick="switchTab('pae')" id="nav-pae" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-notes-medical text-rose-400"></i>
           <span>PAE</span>
@@ -427,6 +431,94 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2.5 BANCO DE PREGUNTAS (QUIZ CRONOMETRADO) ==================== -->
+    <section id="view-quiz" class="hidden space-y-6">
+      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-teal-400"></i> Banco de Preguntas
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400">Quiz de opción múltiple cronometrado. Elige cuántas preguntas responder y pon a prueba tu tiempo.</p>
+        </div>
+      </div>
+
+      <!-- Pantalla de Configuración -->
+      <div id="quiz-setup-view" class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-teal-400"></i> Configura tu Examen
+          </h3>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1.5">Semestre / Materia:</label>
+            <select id="quiz-semester-filter" onchange="updateQuizPoolInfo()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500">
+              <option value="all">Todos los semestres</option>
+              <option value="1">1er Sem.</option>
+              <option value="2">2do Sem.</option>
+              <option value="3">3er Sem.</option>
+              <option value="4">4to Sem.</option>
+              <option value="5">5to Sem.</option>
+              <option value="6">6to Sem.</option>
+              <option value="7">7mo Sem.</option>
+              <option value="8">8vo Sem.</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1.5">Número de preguntas:</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button onclick="setQuizQuestionCount(10)" id="btn-quiz-count-10" class="py-2.5 rounded-xl text-sm font-bold border transition bg-teal-600 text-white border-teal-500">10</button>
+              <button onclick="setQuizQuestionCount(20)" id="btn-quiz-count-20" class="py-2.5 rounded-xl text-sm font-bold border transition bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700">20</button>
+              <button onclick="setQuizQuestionCount(30)" id="btn-quiz-count-30" class="py-2.5 rounded-xl text-sm font-bold border transition bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700">30</button>
+            </div>
+          </div>
+          <p id="quiz-pool-info" class="text-xs text-slate-500"></p>
+          <button onclick="startQuizExam()" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-teal-600/30">
+            <i class="fa-solid fa-play"></i> Iniciar Examen
+          </button>
+        </div>
+
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-clock-rotate-left text-teal-400"></i> Historial de Intentos
+          </h4>
+          <div id="quiz-history-list" class="space-y-2 max-h-96 overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- Pantalla de Examen Activo -->
+      <div id="quiz-active-view" class="hidden space-y-5">
+        <div class="flex justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+          <span id="quiz-progress-label" class="text-sm font-bold text-white">Pregunta 1 de 10</span>
+          <span id="quiz-timer-display" class="text-lg font-mono font-bold text-teal-400"><i class="fa-solid fa-stopwatch mr-1"></i>00:00</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div id="quiz-progress-bar" class="h-full bg-teal-500 transition-all duration-300" style="width:0%"></div>
+        </div>
+        <div class="max-w-2xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <span id="quiz-question-tag" class="text-xs font-bold uppercase tracking-wider text-teal-400 bg-teal-950/80 px-3 py-1 rounded-full border border-teal-800 inline-block"></span>
+          <p id="quiz-question-text" class="text-lg font-bold text-white leading-relaxed"></p>
+          <div id="quiz-options-container" class="grid gap-3"></div>
+        </div>
+      </div>
+
+      <!-- Pantalla de Resultados -->
+      <div id="quiz-results-view" class="hidden space-y-5">
+        <div class="max-w-2xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <div id="quiz-results-summary"></div>
+        </div>
+        <div class="max-w-2xl mx-auto space-y-3">
+          <h4 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 px-1">
+            <i class="fa-solid fa-magnifying-glass text-rose-400"></i> Repaso de Preguntas Falladas
+          </h4>
+          <div id="quiz-review-list" class="space-y-3"></div>
+        </div>
+        <div class="max-w-2xl mx-auto">
+          <button onclick="resetQuizToSetup()" class="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-teal-600/30">
+            <i class="fa-solid fa-rotate-right"></i> Nuevo Examen
+          </button>
         </div>
       </div>
     </section>
@@ -1614,6 +1706,252 @@ Evalúa en máximo 4 párrafos concisos:
       }
     }
 
+    // --- BANCO DE PREGUNTAS (QUIZ CRONOMETRADO) ---
+    const quizBank = [
+      { id: 1, tag: 'Fundamentos', semester: '1', question: '¿Cuál es el rango normal de la frecuencia cardíaca en un adulto en reposo?', options: ['60-100 lpm', '40-60 lpm', '100-140 lpm', '140-160 lpm'], correct: '60-100 lpm' },
+      { id: 2, tag: 'Fundamentos', semester: '1', question: 'La posición de Fowler se caracteriza por:', options: ['Elevación de la cabecera 45-60°', 'Decúbito prono', 'Decúbito lateral con rodillas flexionadas', 'Trendelenburg'], correct: 'Elevación de la cabecera 45-60°' },
+      { id: 3, tag: 'Anatomía', semester: '1', question: '¿Cuántos pares de nervios craneales existen?', options: ['12', '10', '8', '14'], correct: '12' },
+      { id: 4, tag: 'Anatomía', semester: '1', question: 'La unidad funcional del riñón se llama:', options: ['Nefrona', 'Alveolo', 'Hepatocito', 'Osteocito'], correct: 'Nefrona' },
+      { id: 5, tag: 'Anatomía', semester: '2', question: 'El ventrículo izquierdo expulsa sangre hacia:', options: ['La aorta', 'La arteria pulmonar', 'La vena cava', 'La aurícula derecha'], correct: 'La aorta' },
+      { id: 6, tag: 'Farmacología', semester: '2', question: 'La vía de administración con inicio de acción más rápido es:', options: ['Intravenosa', 'Oral', 'Subcutánea', 'Intramuscular'], correct: 'Intravenosa' },
+      { id: 7, tag: 'Farmacología', semester: '2', question: 'Un fármaco antipirético actúa principalmente reduciendo:', options: ['La fiebre', 'La inflamación crónica', 'La presión arterial', 'La glucemia'], correct: 'La fiebre' },
+      { id: 8, tag: 'Farmacología', semester: '3', question: 'La insulina se administra habitualmente por vía:', options: ['Subcutánea', 'Oral', 'Rectal', 'Intramuscular'], correct: 'Subcutánea' },
+      { id: 9, tag: 'Médico-Quirúrgica', semester: '3', question: 'El signo de Homans positivo se asocia clásicamente a:', options: ['Trombosis venosa profunda', 'Apendicitis', 'Neumotórax', 'Colecistitis'], correct: 'Trombosis venosa profunda' },
+      { id: 10, tag: 'Médico-Quirúrgica', semester: '3', question: 'La tríada de Virchow incluye estasis venosa, lesión endotelial y:', options: ['Hipercoagulabilidad', 'Hipoxemia', 'Hipertensión', 'Hipoglucemia'], correct: 'Hipercoagulabilidad' },
+      { id: 11, tag: 'Materno-Infantil', semester: '4', question: 'El test de Apgar se evalúa a los:', options: ['1 y 5 minutos de vida', '10 y 20 minutos de vida', 'Solo al nacer', 'Cada hora'], correct: '1 y 5 minutos de vida' },
+      { id: 12, tag: 'Pediatría', semester: '4', question: 'La vacuna BCG protege contra:', options: ['Tuberculosis', 'Sarampión', 'Tétanos', 'Hepatitis B'], correct: 'Tuberculosis' },
+      { id: 13, tag: 'Materno-Infantil', semester: '4', question: 'Hacia el final del embarazo, el líquido amniótico se produce principalmente a partir de:', options: ['Los riñones fetales (orina fetal)', 'La placenta', 'El cordón umbilical', 'El útero materno'], correct: 'Los riñones fetales (orina fetal)' },
+      { id: 14, tag: 'Salud Mental', semester: '5', question: 'Los síntomas positivos de la esquizofrenia incluyen:', options: ['Alucinaciones y delirios', 'Aplanamiento afectivo', 'Abulia', 'Anhedonia'], correct: 'Alucinaciones y delirios' },
+      { id: 15, tag: 'Salud Mental', semester: '5', question: 'La escala de Hamilton se utiliza para evaluar:', options: ['Depresión', 'Dolor', 'Riesgo de caídas', 'Estado nutricional'], correct: 'Depresión' },
+      { id: 16, tag: 'Comunitaria', semester: '6', question: 'La prevención primaria en salud busca principalmente:', options: ['Evitar la aparición de la enfermedad', 'Diagnosticar tempranamente', 'Rehabilitar al paciente', 'Paliar síntomas'], correct: 'Evitar la aparición de la enfermedad' },
+      { id: 17, tag: 'Salud Pública', semester: '6', question: 'La tasa de mortalidad infantil mide las muertes de:', options: ['Menores de 1 año por cada 1000 nacidos vivos', 'Menores de 5 años por cada 100 partos', 'Recién nacidos por cada 100 partos', 'Adultos mayores por cada 1000 habitantes'], correct: 'Menores de 1 año por cada 1000 nacidos vivos' },
+      { id: 18, tag: 'Cuidados Críticos', semester: '7', question: 'La escala de Glasgow evalúa:', options: ['Apertura ocular, respuesta verbal y motora', 'Intensidad del dolor', 'Riesgo de úlceras por presión', 'Nivel de sedación'], correct: 'Apertura ocular, respuesta verbal y motora' },
+      { id: 19, tag: 'Cuidados Críticos', semester: '7', question: 'En un paro cardiorrespiratorio de adulto con un solo reanimador, la relación compresión-ventilación es:', options: ['30:2', '15:2', '5:1', '30:1'], correct: '30:2' },
+      { id: 20, tag: 'Cuidados Críticos', semester: '7', question: 'En ventilación mecánica, la PEEP ayuda principalmente a:', options: ['Mantener los alveolos abiertos al final de la espiración', 'Aumentar la frecuencia respiratoria', 'Disminuir la FiO2 administrada', 'Reducir el volumen tidal'], correct: 'Mantener los alveolos abiertos al final de la espiración' },
+      { id: 21, tag: 'Gerencia', semester: '8', question: 'El Proceso de Atención de Enfermería (PAE) consta de:', options: ['5 etapas', '4 etapas', '3 etapas', '6 etapas'], correct: '5 etapas' },
+      { id: 22, tag: 'Investigación', semester: '8', question: 'Un estudio de cohorte se clasifica como un diseño:', options: ['Observacional', 'Experimental puro', 'Cualitativo fenomenológico', 'Ninguno de los anteriores'], correct: 'Observacional' },
+      { id: 23, tag: 'Fundamentos', semester: '1', question: 'El pulso radial se palpa habitualmente en:', options: ['La muñeca', 'El cuello', 'La ingle', 'El tobillo'], correct: 'La muñeca' },
+      { id: 24, tag: 'Fundamentos', semester: '1', question: 'La temperatura corporal central normal promedio se sitúa en:', options: ['36.5-37.5°C', '35-36°C', '38-39°C', '34-35°C'], correct: '36.5-37.5°C' },
+      { id: 25, tag: 'Farmacología', semester: '2', question: 'Los antibióticos betalactámicos actúan principalmente:', options: ['Inhibiendo la síntesis de la pared celular bacteriana', 'Bloqueando la replicación viral', 'Inhibiendo la síntesis de ADN humano', 'Bloqueando receptores de dopamina'], correct: 'Inhibiendo la síntesis de la pared celular bacteriana' },
+      { id: 26, tag: 'Médico-Quirúrgica', semester: '3', question: 'La diabetes mellitus tipo 1 se caracteriza por:', options: ['Destrucción autoinmune de las células beta pancreáticas', 'Resistencia periférica a la insulina', 'Exceso de cortisol circulante', 'Déficit de hormona tiroidea'], correct: 'Destrucción autoinmune de las células beta pancreáticas' },
+      { id: 27, tag: 'Materno-Infantil', semester: '4', question: 'El periodo de mayor riesgo de malformaciones congénitas durante el embarazo es:', options: ['El primer trimestre', 'El segundo trimestre', 'El tercer trimestre', 'El momento del parto'], correct: 'El primer trimestre' },
+      { id: 28, tag: 'Salud Mental', semester: '5', question: 'El trastorno bipolar se caracteriza por la alternancia entre:', options: ['Episodios maníacos y depresivos', 'Ansiedad y ataques de pánico', 'Delirios persistentes aislados', 'Fobias específicas'], correct: 'Episodios maníacos y depresivos' },
+      { id: 29, tag: 'Comunitaria', semester: '6', question: 'Las campañas de inmunización son un ejemplo de prevención:', options: ['Primaria', 'Secundaria', 'Terciaria', 'Cuaternaria'], correct: 'Primaria' },
+      { id: 30, tag: 'Cuidados Críticos', semester: '7', question: 'La saturación de oxígeno (SatO2) normal en un adulto sano es:', options: ['95-100%', '85-90%', '70-80%', '90-92%'], correct: '95-100%' }
+    ];
+
+    let quizHistory = JSON.parse(localStorage.getItem('study_quiz_history')) || [];
+    let quizState = null;
+    let quizSelectedCount = 10;
+
+    function getFilteredQuizBank() {
+      const filter = document.getElementById('quiz-semester-filter')?.value || 'all';
+      if (filter === 'all') return quizBank;
+      return quizBank.filter(q => q.semester === filter);
+    }
+
+    function setQuizQuestionCount(n) {
+      quizSelectedCount = n;
+      [10, 20, 30].forEach(c => {
+        const btn = document.getElementById(`btn-quiz-count-${c}`);
+        btn.className = 'py-2.5 rounded-xl text-sm font-bold border transition ' + (c === n ? 'bg-teal-600 text-white border-teal-500' : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700');
+      });
+      updateQuizPoolInfo();
+    }
+
+    function updateQuizPoolInfo() {
+      const info = document.getElementById('quiz-pool-info');
+      if (!info) return;
+      const pool = getFilteredQuizBank();
+      if (pool.length === 0) info.textContent = 'No hay preguntas disponibles para este semestre todavía.';
+      else if (pool.length < quizSelectedCount) info.textContent = `Solo hay ${pool.length} pregunta(s) disponibles con este filtro; el examen usará ${pool.length}.`;
+      else info.textContent = `${pool.length} preguntas disponibles con este filtro.`;
+    }
+
+    function shuffleQuizArray(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function startQuizExam() {
+      const pool = getFilteredQuizBank();
+      if (pool.length === 0) { alert('No hay preguntas disponibles para el semestre seleccionado.'); return; }
+      const count = Math.min(quizSelectedCount, pool.length);
+      const questions = shuffleQuizArray(pool).slice(0, count).map(q => ({ ...q, shuffledOptions: shuffleQuizArray(q.options) }));
+
+      quizState = {
+        questions,
+        currentIndex: 0,
+        answers: [],
+        elapsedSeconds: 0,
+        timerInterval: null,
+        semesterFilter: document.getElementById('quiz-semester-filter').value
+      };
+
+      document.getElementById('quiz-setup-view').classList.add('hidden');
+      document.getElementById('quiz-results-view').classList.add('hidden');
+      document.getElementById('quiz-active-view').classList.remove('hidden');
+
+      updateQuizTimerDisplay();
+      quizState.timerInterval = setInterval(() => {
+        quizState.elapsedSeconds++;
+        updateQuizTimerDisplay();
+      }, 1000);
+
+      renderQuizQuestion();
+    }
+
+    function updateQuizTimerDisplay() {
+      const mins = Math.floor(quizState.elapsedSeconds / 60);
+      const secs = quizState.elapsedSeconds % 60;
+      document.getElementById('quiz-timer-display').innerHTML = `<i class="fa-solid fa-stopwatch mr-1"></i>${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function renderQuizQuestion() {
+      const q = quizState.questions[quizState.currentIndex];
+      document.getElementById('quiz-progress-label').textContent = `Pregunta ${quizState.currentIndex + 1} de ${quizState.questions.length}`;
+      document.getElementById('quiz-progress-bar').style.width = `${(quizState.currentIndex / quizState.questions.length) * 100}%`;
+      document.getElementById('quiz-question-tag').textContent = q.tag;
+      document.getElementById('quiz-question-text').textContent = q.question;
+
+      document.getElementById('quiz-options-container').innerHTML = q.shuffledOptions.map((opt, idx) => `
+        <button onclick="answerQuizQuestion(${idx})" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-800 border border-slate-700 hover:border-teal-500 rounded-xl text-sm text-slate-200 transition">
+          <span class="font-bold text-teal-400 mr-2">${String.fromCharCode(65 + idx)}.</span>${opt}
+        </button>
+      `).join('');
+    }
+
+    function answerQuizQuestion(idx) {
+      const q = quizState.questions[quizState.currentIndex];
+      const selected = q.shuffledOptions[idx];
+      quizState.answers.push({ question: q.question, tag: q.tag, selected, correct: q.correct, isCorrect: selected === q.correct });
+
+      quizState.currentIndex++;
+      if (quizState.currentIndex >= quizState.questions.length) finishQuizExam();
+      else renderQuizQuestion();
+    }
+
+    async function finishQuizExam() {
+      clearInterval(quizState.timerInterval);
+      document.getElementById('quiz-progress-bar').style.width = '100%';
+
+      const total = quizState.questions.length;
+      const score = quizState.answers.filter(a => a.isCorrect).length;
+      const percentage = Math.round((score / total) * 100);
+
+      const attempt = {
+        id: Date.now() + Math.random(),
+        score,
+        total,
+        percentage,
+        time_seconds: quizState.elapsedSeconds,
+        semester: quizState.semesterFilter,
+        date: new Date().toISOString()
+      };
+
+      quizHistory.unshift(attempt);
+      saveQuizHistory();
+      await saveQuizAttemptToCloud(attempt);
+
+      renderQuizResults(attempt);
+      document.getElementById('quiz-active-view').classList.add('hidden');
+      document.getElementById('quiz-results-view').classList.remove('hidden');
+    }
+
+    function renderQuizResults(attempt) {
+      const mins = Math.floor(attempt.time_seconds / 60);
+      const secs = attempt.time_seconds % 60;
+      const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+      let color = 'text-rose-400';
+      if (attempt.percentage >= 80) color = 'text-emerald-400';
+      else if (attempt.percentage >= 60) color = 'text-amber-400';
+
+      document.getElementById('quiz-results-summary').innerHTML = `
+        <div class="text-center space-y-2">
+          <i class="fa-solid fa-clipboard-check text-3xl text-teal-400"></i>
+          <div class="text-5xl font-black ${color}">${attempt.score}/${attempt.total}</div>
+          <div class="text-sm text-slate-400">${attempt.percentage}% de aciertos &bull; Tiempo: ${timeStr}</div>
+        </div>
+      `;
+
+      const wrongAnswers = quizState.answers.filter(a => !a.isCorrect);
+      const reviewContainer = document.getElementById('quiz-review-list');
+      if (wrongAnswers.length === 0) {
+        reviewContainer.innerHTML = `<p class="text-center text-emerald-400 text-sm py-4 bg-slate-900/60 border border-slate-800 rounded-2xl"><i class="fa-solid fa-trophy"></i> ¡Respondiste todo correctamente!</p>`;
+      } else {
+        reviewContainer.innerHTML = wrongAnswers.map(a => `
+          <div class="p-4 bg-slate-900/80 rounded-xl border border-rose-900/50 space-y-1.5">
+            <p class="text-[10px] text-teal-400 uppercase font-bold tracking-wider">${a.tag}</p>
+            <p class="text-sm text-white font-semibold">${a.question}</p>
+            <p class="text-xs text-rose-400"><i class="fa-solid fa-xmark"></i> Tu respuesta: ${a.selected}</p>
+            <p class="text-xs text-emerald-400"><i class="fa-solid fa-check"></i> Respuesta correcta: ${a.correct}</p>
+          </div>
+        `).join('');
+      }
+    }
+
+    function saveQuizHistory() {
+      localStorage.setItem('study_quiz_history', JSON.stringify(quizHistory));
+    }
+
+    async function saveQuizAttemptToCloud(attempt) {
+      if (!supabaseClient || !currentUser) return;
+      try {
+        await supabaseClient.from('quiz_attempts').insert({
+          user_id: currentUser.id,
+          score: attempt.score,
+          total: attempt.total,
+          percentage: attempt.percentage,
+          time_seconds: attempt.time_seconds,
+          semester: attempt.semester
+        });
+      } catch (err) {}
+    }
+
+    function renderQuizHistory() {
+      const container = document.getElementById('quiz-history-list');
+      if (!container) return;
+      if (quizHistory.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Aún no tienes intentos registrados.</p>`;
+        return;
+      }
+      container.innerHTML = quizHistory.slice(0, 15).map(a => {
+        const mins = Math.floor((a.time_seconds || 0) / 60);
+        const secs = (a.time_seconds || 0) % 60;
+        const dateStr = new Date(a.date).toLocaleDateString('es', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+        let color = 'text-rose-400';
+        if (a.percentage >= 80) color = 'text-emerald-400';
+        else if (a.percentage >= 60) color = 'text-amber-400';
+        return `
+          <div class="flex justify-between items-center p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-xs">
+            <div>
+              <p class="font-bold ${color}">${a.score}/${a.total} (${a.percentage}%)</p>
+              <p class="text-slate-500">${dateStr}</p>
+            </div>
+            <span class="text-slate-400 font-mono"><i class="fa-solid fa-stopwatch mr-1"></i>${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderQuizSetup() {
+      updateQuizPoolInfo();
+      renderQuizHistory();
+    }
+
+    function resetQuizToSetup() {
+      quizState = null;
+      document.getElementById('quiz-results-view').classList.add('hidden');
+      document.getElementById('quiz-active-view').classList.add('hidden');
+      document.getElementById('quiz-setup-view').classList.remove('hidden');
+      renderQuizSetup();
+    }
+
     // --- AUTENTICACIÓN & VINCULACIÓN DE CLAVE GEMINI ---
     function toggleAuthModal(show) {
       document.getElementById('auth-modal').classList.toggle('hidden', !show);
@@ -1744,6 +2082,13 @@ Evalúa en máximo 4 párrafos concisos:
           loadedSources = cloudSources.map(s => ({ id: s.id, name: s.name, mimeType: s.mime_type, base64: s.base64 }));
           renderSourcesList();
           appendChatMessage('system', `☁️ Se restauraron ${loadedSources.length} fuente(s) de tu cuenta.`);
+        }
+
+        const { data: cloudQuizAttempts } = await supabaseClient.from('quiz_attempts').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(50);
+        if (cloudQuizAttempts && cloudQuizAttempts.length > 0) {
+          quizHistory = cloudQuizAttempts.map(a => ({ id: a.id, score: a.score, total: a.total, percentage: a.percentage, time_seconds: a.time_seconds, semester: a.semester, date: a.created_at }));
+          saveQuizHistory();
+          renderQuizHistory();
         }
       } catch (e) {}
     }
@@ -1987,7 +2332,7 @@ Evalúa en máximo 4 párrafos concisos:
 
     // --- NAVEGACIÓN ---
     function switchTab(tab) {
-      ['atlas', 'tutor', 'notebook', 'cases', 'pae', 'calc', 'scales', 'labs', 'diagrams', 'flashcards', 'timer'].forEach(t => {
+      ['atlas', 'tutor', 'notebook', 'cases', 'quiz', 'pae', 'calc', 'scales', 'labs', 'diagrams', 'flashcards', 'timer'].forEach(t => {
         const el = document.getElementById(`view-${t}`);
         if (el) el.classList.add('hidden');
       });
@@ -2002,6 +2347,7 @@ Evalúa en máximo 4 párrafos concisos:
 
       if (tab === 'flashcards') renderFlashcards();
       else if (tab === 'cases') renderCurrentCase();
+      else if (tab === 'quiz') renderQuizSetup();
       else if (tab === 'calc') { calculateDripRate(); calculateDose(); }
       else if (tab === 'scales') { calculateGlasgow(); calculateApgar(); calculateEva(); calculateBraden(); }
       else if (tab === 'labs') renderLabTable();
@@ -2334,6 +2680,9 @@ Evalúa en máximo 4 párrafos concisos:
       calculateDripRate();
       calculateDose();
       document.getElementById('semester-selector').value = currentSemester;
+      document.getElementById('quiz-semester-filter').value = currentSemester;
+      setQuizQuestionCount(10);
+      renderQuizSetup();
       calculateGlasgow();
       calculateApgar();
       calculateEva();
