@@ -1448,7 +1448,7 @@ Evalúa en máximo 4 párrafos concisos:
 
     async function generateAIPAEPlan() {
       const vignette = document.getElementById('case-vignette').textContent;
-      const prompt = `A partir de esta viñeta: "${vignette}", genera un PAE en formato JSON:
+      const prompt = `${getNucleoContextForIA()} A partir de esta viñeta: "${vignette}", genera un PAE en formato JSON:
 {"assessment":"...","nanda":"...","noc":"...","nic":"..."}`;
       const btn = document.getElementById('btn-gen-pae');
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PAE...';
@@ -1644,7 +1644,7 @@ Evalúa en máximo 4 párrafos concisos:
         appendChatMessage('user', 'Genera 2 casos clínicos de examen oral del PDF.');
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Analizando el documento...');
         
-        const prompt = `Genera exactamente 2 casos clínicos de examen oral basados en el documento adjunto. Formato JSON:
+        const prompt = `${getNucleoContextForIA()} Genera exactamente 2 casos clínicos de examen oral basados en el documento adjunto. En el campo "category" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). Formato JSON:
 [{"category":"Tema","vignette":"Historia...","question":"Pregunta...","answer":"Respuesta...","keyPoints":"Puntos"}]`;
         try {
           let text = await callGeminiWithPDF(prompt);
@@ -1660,7 +1660,7 @@ Evalúa en máximo 4 párrafos concisos:
         appendChatMessage('user', 'Crea 4 Flashcards de alto rendimiento de este PDF.');
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Extrayendo flashcards...');
 
-        const prompt = `Crea 4 flashcards basadas en el documento adjunto. Formato JSON:
+        const prompt = `${getNucleoContextForIA()} Crea 4 flashcards basadas en el documento adjunto. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). Formato JSON:
 [{"tag":"Tema","front":"¿Pregunta?","back":"Respuesta"}]`;
         try {
           let text = await callGeminiWithPDF(prompt);
@@ -1701,7 +1701,7 @@ Evalúa en máximo 4 párrafos concisos:
         appendChatMessage('user', 'Dame una síntesis estructurada para responder en examen oral sobre este documento.');
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Sintetizando...');
         try {
-          const text = await callGeminiWithPDF('Devuelve una síntesis estructurada con los 5 puntos cardinales del PDF para examen oral.');
+          const text = await callGeminiWithPDF(`${getNucleoContextForIA()} Devuelve una síntesis estructurada con los 5 puntos cardinales del PDF para examen oral.`);
           appendChatMessage('ai', text);
         } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
       }
