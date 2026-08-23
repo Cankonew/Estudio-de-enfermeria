@@ -208,10 +208,12 @@
             <div id="pdf-dropzone" onclick="document.getElementById('pdf-file-input').click()"
               class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/60 flex flex-col items-center justify-center space-y-2">
               <i class="fa-solid fa-file-pdf text-3xl text-rose-500"></i>
-              <p id="pdf-file-name" class="text-xs text-slate-300 font-semibold">Toca para seleccionar tu archivo PDF</p>
-              <p class="text-[10px] text-slate-500">Capítulos o guías de estudio (hasta 50 MB)</p>
-              <input type="file" id="pdf-file-input" accept="application/pdf,image/*" class="hidden" onchange="handlePDFUpload(event)">
+              <p id="pdf-file-name" class="text-xs text-slate-300 font-semibold">Toca para seleccionar uno o varios PDF</p>
+              <p class="text-[10px] text-slate-500">Capítulos o guías de estudio (hasta 50 MB c/u)</p>
+              <input type="file" id="pdf-file-input" accept="application/pdf,image/*" multiple class="hidden" onchange="handlePDFUpload(event)">
             </div>
+
+            <div id="pdf-sources-list" class="space-y-1.5"></div>
 
             <div class="space-y-2 pt-1">
               <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Acciones Rápidas:</label>
@@ -245,8 +247,8 @@
               <p class="font-semibold text-slate-300 flex items-center gap-1.5">
                 <i class="fa-solid fa-sparkles text-amber-400"></i> Asistente de Lectura Crítica:
               </p>
-              <p>1. Carga tu PDF en el panel izquierdo.</p>
-              <p>2. Ejecuta una acción rápida o haz preguntas directas sobre el contenido.</p>
+              <p>1. Carga uno o varios PDF en el panel izquierdo.</p>
+              <p>2. Ejecuta una acción rápida o haz preguntas directas sobre el contenido combinado de tus fuentes.</p>
             </div>
           </div>
 
@@ -609,9 +611,14 @@ graph TD
           <label class="text-xs font-semibold text-slate-400 block mb-1">Respuesta (dorso):</label>
           <textarea id="new-card-back" required rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></textarea>
         </div>
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/30">
-          Guardar Tarjeta
-        </button>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="toggleCardModal(false)" class="px-4 py-2 text-xs text-slate-400 hover:text-white transition">
+            Cancelar
+          </button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30">
+            Guardar Tarjeta
+          </button>
+        </div>
       </form>
     </div>
   </div>
@@ -681,8 +688,7 @@ graph TD
     let authActionType = 'login';
     let userGeminiApiKey = localStorage.getItem('study_gemini_key') || '';
 
-    let loadedPdfBase64 = null;
-    let loadedPdfMimeType = null;
+    let loadedSources = []; // { id, name, mimeType, base64 }
     let loadedPdfFileName = '';
 
     let recognition = null;
@@ -1077,23 +1083,65 @@ Evalúa en máximo 4 párrafos concisos:
 
     // --- CARGA DE PDF & NOTEBOOK IA ---
     function handlePDFUpload(e) {
-      const file = e.target.files[0];
-      if (!file) return;
+      const files = Array.from(e.target.files || []);
+      if (files.length === 0) return;
 
-      loadedPdfFileName = file.name;
-      loadedPdfMimeType = file.type || 'application/pdf';
+      files.forEach(file => {
+        const source = { id: Date.now() + Math.random(), name: file.name, mimeType: file.type || 'application/pdf', base64: null };
+        loadedSources.push(source);
 
-      document.getElementById('pdf-file-name').textContent = file.name;
-      document.getElementById('pdf-status-badge').textContent = `Activo: ${file.name.substring(0, 18)}...`;
-      document.getElementById('pdf-status-badge').className = 'text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded-full';
+        const reader = new FileReader();
+        reader.onload = async function(evt) {
+          source.base64 = evt.target.result.split(',')[1];
+          appendChatMessage('system', `📄 Documento <strong>${file.name}</strong> cargado con éxito. Ahora puedes generar casos, flashcards o consultar directamente sobre todas tus fuentes.`);
 
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const fullResult = evt.target.result;
-        loadedPdfBase64 = fullResult.split(',')[1];
-        appendChatMessage('system', `📄 Documento <strong>${file.name}</strong> cargado con éxito. Ahora puedes generar casos, flashcards o consultar directamente.`);
-      };
-      reader.readAsDataURL(file);
+          if (supabaseClient && currentUser) {
+            try {
+              await supabaseClient.from('notebook_sources').upsert({
+                id: source.id, user_id: currentUser.id, name: source.name,
+                mime_type: source.mimeType, base64: source.base64
+              });
+            } catch (err) {}
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      renderSourcesList();
+      e.target.value = ''; // permite volver a seleccionar el mismo archivo si se removió
+    }
+
+    async function removeSource(id) {
+      loadedSources = loadedSources.filter(s => s.id !== id);
+      renderSourcesList();
+      if (supabaseClient && currentUser) {
+        try { await supabaseClient.from('notebook_sources').delete().eq('id', id); } catch (err) {}
+      }
+    }
+
+    function renderSourcesList() {
+      const list = document.getElementById('pdf-sources-list');
+      const badge = document.getElementById('pdf-status-badge');
+      const label = document.getElementById('pdf-file-name');
+
+      list.innerHTML = loadedSources.map(s => `
+        <div class="flex items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5">
+          <span class="text-[11px] text-slate-300 truncate flex items-center gap-1.5">
+            <i class="fa-solid fa-file-pdf text-rose-500"></i> ${s.name}
+          </span>
+          <button onclick="removeSource(${s.id})" class="text-slate-500 hover:text-rose-400 shrink-0"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `).join('');
+
+      if (loadedSources.length === 0) {
+        badge.textContent = 'Sin PDF cargado';
+        badge.className = 'text-[10px] font-bold uppercase bg-slate-800 text-slate-400 px-2.5 py-1 rounded-full';
+        label.textContent = 'Toca para seleccionar uno o varios PDF';
+      } else {
+        badge.textContent = `${loadedSources.length} fuente${loadedSources.length > 1 ? 's' : ''} activa${loadedSources.length > 1 ? 's' : ''}`;
+        badge.className = 'text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded-full';
+        label.textContent = 'Toca para agregar más documentos';
+      }
     }
 
     function appendChatMessage(sender, htmlContent) {
@@ -1122,15 +1170,21 @@ Evalúa en máximo 4 párrafos concisos:
         return null;
       }
 
-      const parts = [{ text: promptText }];
-      if (loadedPdfBase64) {
+      const readySources = loadedSources.filter(s => s.base64);
+      let instructions = promptText;
+      if (readySources.length > 0) {
+        instructions += `\n\nTienes ${readySources.length} documento(s) adjunto(s) como fuentes: ${readySources.map(s => s.name).join(', ')}. Basa tu respuesta únicamente en el contenido de estos documentos y, cuando sea posible, indica de qué documento (por nombre) sale cada dato.`;
+      }
+
+      const parts = [{ text: instructions }];
+      readySources.forEach(s => {
         parts.push({
           inline_data: {
-            mime_type: loadedPdfMimeType,
-            data: loadedPdfBase64
+            mime_type: s.mimeType,
+            data: s.base64
           }
         });
-      }
+      });
 
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${userGeminiApiKey}`, {
         method: 'POST',
@@ -1144,8 +1198,8 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     async function askPDFAction(action) {
-      if (!loadedPdfBase64) {
-        alert('Por favor selecciona primero un archivo PDF tocando la zona de carga.');
+      if (loadedSources.filter(s => s.base64).length === 0) {
+        alert('Por favor selecciona primero al menos un archivo PDF tocando la zona de carga.');
         return;
       }
 
@@ -1238,6 +1292,7 @@ Evalúa en máximo 4 párrafos concisos:
         try {
           if (type === 'flashcards') await supabaseClient.from('flashcards').upsert(flashcards.map(f => ({ ...f, user_id: currentUser.id })));
           if (type === 'cases') await supabaseClient.from('clinical_cases').upsert(clinicalCases.map(c => ({ ...c, user_id: currentUser.id })));
+          if (type === 'stats') await supabaseClient.from('study_stats').upsert({ user_id: currentUser.id, sessions: studyStats.sessions, minutes: studyStats.minutes });
         } catch (err) {}
       }
     }
@@ -1336,6 +1391,28 @@ Evalúa en máximo 4 párrafos concisos:
           flashcards = cloudCards;
           saveData('flashcards');
           renderFlashcards();
+        }
+
+        const { data: cloudCases } = await supabaseClient.from('clinical_cases').select('*').eq('user_id', currentUser.id);
+        if (cloudCases && cloudCases.length > 0) {
+          clinicalCases = cloudCases;
+          localStorage.setItem('study_clinical_cases', JSON.stringify(clinicalCases));
+          currentCaseIndex = 0;
+          renderCurrentCase();
+        }
+
+        const { data: cloudStats } = await supabaseClient.from('study_stats').select('*').eq('user_id', currentUser.id).single();
+        if (cloudStats) {
+          studyStats = { sessions: cloudStats.sessions || 0, minutes: cloudStats.minutes || 0 };
+          localStorage.setItem('study_stats', JSON.stringify(studyStats));
+          updateStatsUI();
+        }
+
+        const { data: cloudSources } = await supabaseClient.from('notebook_sources').select('*').eq('user_id', currentUser.id);
+        if (cloudSources && cloudSources.length > 0) {
+          loadedSources = cloudSources.map(s => ({ id: s.id, name: s.name, mimeType: s.mime_type, base64: s.base64 }));
+          renderSourcesList();
+          appendChatMessage('system', `☁️ Se restauraron ${loadedSources.length} fuente(s) de tu cuenta.`);
         }
       } catch (e) {}
     }
@@ -1474,13 +1551,11 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     function rateCard(difficulty) {
-      // Repetición espaciada simple: las tarjetas "difíciles" vuelven pronto,
-      // las "fáciles" se alejan más en el mazo.
       const [card] = flashcards.splice(currentCardIndex, 1);
       let insertOffset;
       if (difficulty === 'hard') insertOffset = Math.min(2, flashcards.length);
       else if (difficulty === 'medium') insertOffset = Math.min(5, flashcards.length);
-      else insertOffset = flashcards.length; // 'easy' -> va al final del mazo
+      else insertOffset = flashcards.length;
 
       const insertIndex = Math.min(currentCardIndex + insertOffset, flashcards.length);
       flashcards.splice(insertIndex, 0, card);
