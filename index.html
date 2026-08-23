@@ -311,6 +311,9 @@
               <button onclick="askPDFAction('pae')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-notes-medical text-rose-400"></i> Extraer Plan PAE (NANDA-NIC)
               </button>
+              <button onclick="askPDFAction('quiz')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-list-check text-teal-400"></i> Generar 5 Preguntas del PDF
+              </button>
               <button onclick="askPDFAction('summary')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-brain text-amber-400"></i> Resumen para Examen Oral
               </button>
@@ -1646,6 +1649,29 @@ Evalúa en máximo 4 párrafos concisos:
 
       } else if (action === 'pae') {
         generateAIPAEPlan();
+      } else if (action === 'quiz') {
+        appendChatMessage('user', 'Genera 5 preguntas de opción múltiple de este PDF para el Banco de Preguntas.');
+        appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-teal-400"></i> Generando preguntas...');
+
+        const prompt = `Genera exactamente 5 preguntas de opción múltiple tipo examen basadas en el documento adjunto. Cada pregunta debe tener 4 opciones y solo una correcta. Formato JSON:
+[{"tag":"Tema","question":"¿Pregunta?","options":["Opción A","Opción B","Opción C","Opción D"],"correctIndex":0}]`;
+        try {
+          let text = await callGeminiWithPDF(prompt);
+          text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const newQuestions = JSON.parse(text);
+
+          newQuestions.forEach(q => quizBank.push({
+            id: Date.now() + Math.random(),
+            tag: q.tag,
+            semester: currentSemester,
+            question: q.question,
+            options: q.options,
+            correct: q.options[q.correctIndex]
+          }));
+          saveQuizBank();
+          appendChatMessage('ai', `✅ Se generaron **${newQuestions.length} preguntas** y se agregaron al Banco de Preguntas para el semestre seleccionado en el header.`);
+        } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+
       } else if (action === 'summary') {
         appendChatMessage('user', 'Dame una síntesis estructurada para responder en examen oral sobre este documento.');
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Sintetizando...');
@@ -1707,14 +1733,14 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     // --- BANCO DE PREGUNTAS (QUIZ CRONOMETRADO) ---
-    const quizBank = [
+    const quizSeedBank = [
       { id: 1, tag: 'Fundamentos', semester: '1', question: '¿Cuál es el rango normal de la frecuencia cardíaca en un adulto en reposo?', options: ['60-100 lpm', '40-60 lpm', '100-140 lpm', '140-160 lpm'], correct: '60-100 lpm' },
       { id: 2, tag: 'Fundamentos', semester: '1', question: 'La posición de Fowler se caracteriza por:', options: ['Elevación de la cabecera 45-60°', 'Decúbito prono', 'Decúbito lateral con rodillas flexionadas', 'Trendelenburg'], correct: 'Elevación de la cabecera 45-60°' },
       { id: 3, tag: 'Anatomía', semester: '1', question: '¿Cuántos pares de nervios craneales existen?', options: ['12', '10', '8', '14'], correct: '12' },
       { id: 4, tag: 'Anatomía', semester: '1', question: 'La unidad funcional del riñón se llama:', options: ['Nefrona', 'Alveolo', 'Hepatocito', 'Osteocito'], correct: 'Nefrona' },
       { id: 5, tag: 'Anatomía', semester: '2', question: 'El ventrículo izquierdo expulsa sangre hacia:', options: ['La aorta', 'La arteria pulmonar', 'La vena cava', 'La aurícula derecha'], correct: 'La aorta' },
-      { id: 6, tag: 'Farmacología', semester: '2', question: 'La vía de administración con inicio de acción más rápido es:', options: ['Intravenosa', 'Oral', 'Subcutánea', 'Intramuscular'], correct: 'Intravenosa' },
-      { id: 7, tag: 'Farmacología', semester: '2', question: 'Un fármaco antipirético actúa principalmente reduciendo:', options: ['La fiebre', 'La inflamación crónica', 'La presión arterial', 'La glucemia'], correct: 'La fiebre' },
+      { id: 6, tag: 'Farmacología', semester: '3', question: 'La vía de administración con inicio de acción más rápido es:', options: ['Intravenosa', 'Oral', 'Subcutánea', 'Intramuscular'], correct: 'Intravenosa' },
+      { id: 7, tag: 'Farmacología', semester: '3', question: 'Un fármaco antipirético actúa principalmente reduciendo:', options: ['La fiebre', 'La inflamación crónica', 'La presión arterial', 'La glucemia'], correct: 'La fiebre' },
       { id: 8, tag: 'Farmacología', semester: '3', question: 'La insulina se administra habitualmente por vía:', options: ['Subcutánea', 'Oral', 'Rectal', 'Intramuscular'], correct: 'Subcutánea' },
       { id: 9, tag: 'Médico-Quirúrgica', semester: '3', question: 'El signo de Homans positivo se asocia clásicamente a:', options: ['Trombosis venosa profunda', 'Apendicitis', 'Neumotórax', 'Colecistitis'], correct: 'Trombosis venosa profunda' },
       { id: 10, tag: 'Médico-Quirúrgica', semester: '3', question: 'La tríada de Virchow incluye estasis venosa, lesión endotelial y:', options: ['Hipercoagulabilidad', 'Hipoxemia', 'Hipertensión', 'Hipoglucemia'], correct: 'Hipercoagulabilidad' },
@@ -1728,17 +1754,22 @@ Evalúa en máximo 4 párrafos concisos:
       { id: 18, tag: 'Cuidados Críticos', semester: '7', question: 'La escala de Glasgow evalúa:', options: ['Apertura ocular, respuesta verbal y motora', 'Intensidad del dolor', 'Riesgo de úlceras por presión', 'Nivel de sedación'], correct: 'Apertura ocular, respuesta verbal y motora' },
       { id: 19, tag: 'Cuidados Críticos', semester: '7', question: 'En un paro cardiorrespiratorio de adulto con un solo reanimador, la relación compresión-ventilación es:', options: ['30:2', '15:2', '5:1', '30:1'], correct: '30:2' },
       { id: 20, tag: 'Cuidados Críticos', semester: '7', question: 'En ventilación mecánica, la PEEP ayuda principalmente a:', options: ['Mantener los alveolos abiertos al final de la espiración', 'Aumentar la frecuencia respiratoria', 'Disminuir la FiO2 administrada', 'Reducir el volumen tidal'], correct: 'Mantener los alveolos abiertos al final de la espiración' },
-      { id: 21, tag: 'Gerencia', semester: '8', question: 'El Proceso de Atención de Enfermería (PAE) consta de:', options: ['5 etapas', '4 etapas', '3 etapas', '6 etapas'], correct: '5 etapas' },
-      { id: 22, tag: 'Investigación', semester: '8', question: 'Un estudio de cohorte se clasifica como un diseño:', options: ['Observacional', 'Experimental puro', 'Cualitativo fenomenológico', 'Ninguno de los anteriores'], correct: 'Observacional' },
+      { id: 21, tag: 'Fundamentos', semester: '1', question: 'El Proceso de Atención de Enfermería (PAE) consta de:', options: ['5 etapas', '4 etapas', '3 etapas', '6 etapas'], correct: '5 etapas' },
       { id: 23, tag: 'Fundamentos', semester: '1', question: 'El pulso radial se palpa habitualmente en:', options: ['La muñeca', 'El cuello', 'La ingle', 'El tobillo'], correct: 'La muñeca' },
       { id: 24, tag: 'Fundamentos', semester: '1', question: 'La temperatura corporal central normal promedio se sitúa en:', options: ['36.5-37.5°C', '35-36°C', '38-39°C', '34-35°C'], correct: '36.5-37.5°C' },
-      { id: 25, tag: 'Farmacología', semester: '2', question: 'Los antibióticos betalactámicos actúan principalmente:', options: ['Inhibiendo la síntesis de la pared celular bacteriana', 'Bloqueando la replicación viral', 'Inhibiendo la síntesis de ADN humano', 'Bloqueando receptores de dopamina'], correct: 'Inhibiendo la síntesis de la pared celular bacteriana' },
+      { id: 25, tag: 'Farmacología', semester: '3', question: 'Los antibióticos betalactámicos actúan principalmente:', options: ['Inhibiendo la síntesis de la pared celular bacteriana', 'Bloqueando la replicación viral', 'Inhibiendo la síntesis de ADN humano', 'Bloqueando receptores de dopamina'], correct: 'Inhibiendo la síntesis de la pared celular bacteriana' },
       { id: 26, tag: 'Médico-Quirúrgica', semester: '3', question: 'La diabetes mellitus tipo 1 se caracteriza por:', options: ['Destrucción autoinmune de las células beta pancreáticas', 'Resistencia periférica a la insulina', 'Exceso de cortisol circulante', 'Déficit de hormona tiroidea'], correct: 'Destrucción autoinmune de las células beta pancreáticas' },
       { id: 27, tag: 'Materno-Infantil', semester: '4', question: 'El periodo de mayor riesgo de malformaciones congénitas durante el embarazo es:', options: ['El primer trimestre', 'El segundo trimestre', 'El tercer trimestre', 'El momento del parto'], correct: 'El primer trimestre' },
       { id: 28, tag: 'Salud Mental', semester: '5', question: 'El trastorno bipolar se caracteriza por la alternancia entre:', options: ['Episodios maníacos y depresivos', 'Ansiedad y ataques de pánico', 'Delirios persistentes aislados', 'Fobias específicas'], correct: 'Episodios maníacos y depresivos' },
       { id: 29, tag: 'Comunitaria', semester: '6', question: 'Las campañas de inmunización son un ejemplo de prevención:', options: ['Primaria', 'Secundaria', 'Terciaria', 'Cuaternaria'], correct: 'Primaria' },
       { id: 30, tag: 'Cuidados Críticos', semester: '7', question: 'La saturación de oxígeno (SatO2) normal en un adulto sano es:', options: ['95-100%', '85-90%', '70-80%', '90-92%'], correct: '95-100%' }
     ];
+
+    let quizBank = JSON.parse(localStorage.getItem('study_quiz_bank')) || quizSeedBank;
+
+    function saveQuizBank() {
+      localStorage.setItem('study_quiz_bank', JSON.stringify(quizBank));
+    }
 
     let quizHistory = JSON.parse(localStorage.getItem('study_quiz_history')) || [];
     let quizState = null;
