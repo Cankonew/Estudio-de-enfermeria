@@ -551,6 +551,13 @@
         </button>
       </div>
 
+      <div id="pae-error-box" class="hidden p-3.5 bg-rose-950/30 border border-rose-800/60 rounded-xl text-xs text-rose-300 flex flex-wrap items-center justify-between gap-3">
+        <span><i class="fa-solid fa-triangle-exclamation"></i> La IA no devolvió un formato válido, intenta de nuevo.</span>
+        <button onclick="generateAIPAEPlan()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-3 py-1.5 rounded-lg text-[11px] transition shrink-0">
+          <i class="fa-solid fa-rotate-right"></i> Reintentar
+        </button>
+      </div>
+
       <div class="grid lg:grid-cols-2 gap-6">
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <div class="flex items-center gap-2 text-indigo-400 font-bold text-sm border-b border-slate-800 pb-2">
@@ -1511,15 +1518,15 @@ Evalúa en máximo 4 párrafos concisos:
 
     async function generateAIPAEPlan() {
       const vignette = document.getElementById('case-vignette').textContent;
-      const prompt = `${getNucleoContextForIA()} A partir de esta viñeta: "${vignette}", genera un PAE en formato JSON:
+      const prompt = `${getNucleoContextForIA()} A partir de esta viñeta: "${vignette}", genera un PAE en formato JSON. ${GEMINI_JSON_STRICT_INSTRUCTION}
 {"assessment":"...","nanda":"...","noc":"...","nic":"..."}`;
       const btn = document.getElementById('btn-gen-pae');
+      document.getElementById('pae-error-box').classList.add('hidden');
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PAE...';
 
       try {
-        let text = await callGeminiWithPDF(prompt);
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const data = JSON.parse(text);
+        const text = await callGeminiWithPDF(prompt);
+        const data = parseGeminiJSON(text);
 
         document.getElementById('pae-assessment').value = data.assessment || '';
         document.getElementById('pae-nanda').value = data.nanda || '';
@@ -1527,7 +1534,12 @@ Evalúa en máximo 4 párrafos concisos:
         document.getElementById('pae-nic').value = data.nic || '';
         switchTab('pae');
       } catch (err) {
-        alert('Error generando PAE: ' + err.message);
+        if (err.isAIJsonError) {
+          switchTab('pae');
+          document.getElementById('pae-error-box').classList.remove('hidden');
+        } else {
+          alert('Error generando PAE: ' + err.message);
+        }
       } finally {
         btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generar PAE Completo con IA';
       }
@@ -1663,6 +1675,36 @@ Evalúa en máximo 4 párrafos concisos:
       box.scrollTop = box.scrollHeight;
     }
 
+    // Instrucción reforzada para respuestas JSON de Gemini: reduce (no elimina) la
+    // probabilidad de bloques markdown, comentarios o comas finales inválidas.
+    const GEMINI_JSON_STRICT_INSTRUCTION = 'Responde ÚNICAMENTE con JSON válido, sin bloques de código markdown, sin comentarios, sin comas finales antes de cerrar llaves o corchetes.';
+
+    // Limpia el texto de Gemini (quita ```json / ``` y espacios) e intenta parsearlo.
+    // Si falla, intenta reparar comas finales antes de "}" o "]" y reintenta una vez.
+    // Si aun así falla, lanza un error marcado (isAIJsonError) para mostrar un aviso
+    // amigable en vez del error técnico crudo.
+    function parseGeminiJSON(rawText) {
+      const text = (rawText || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+      try {
+        return JSON.parse(text);
+      } catch (e1) {
+        try {
+          const repaired = text.replace(/,(\s*[}\]])/g, '$1');
+          return JSON.parse(repaired);
+        } catch (e2) {
+          const err = new Error('La IA no devolvió un formato JSON válido.');
+          err.isAIJsonError = true;
+          throw err;
+        }
+      }
+    }
+
+    // Mensaje amigable + botón para reintentar la misma solicitud, usado cuando
+    // parseGeminiJSON no logra recuperar un JSON válido de la respuesta de Gemini.
+    function aiJsonErrorHTML(retryOnclick) {
+      return `⚠️ La IA no devolvió un formato válido, intenta de nuevo. <button onclick="${retryOnclick}" class="mt-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg border border-slate-700 transition"><i class="fa-solid fa-rotate-right"></i> Reintentar</button>`;
+    }
+
     async function callGeminiWithPDF(promptText) {
       if (!userGeminiApiKey) {
         alert('Por favor vincula tu API Key de Google Gemini en el botón "Mi Cuenta & IA" arriba a la derecha.');
@@ -1707,33 +1749,35 @@ Evalúa en máximo 4 párrafos concisos:
         appendChatMessage('user', 'Genera 2 casos clínicos de examen oral del PDF.');
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Analizando el documento...');
         
-        const prompt = `${getNucleoContextForIA()} Genera exactamente 2 casos clínicos de examen oral basados en el documento adjunto. En el campo "category" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). Formato JSON:
+        const prompt = `${getNucleoContextForIA()} Genera exactamente 2 casos clínicos de examen oral basados en el documento adjunto. En el campo "category" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
 [{"category":"Tema","vignette":"Historia...","question":"Pregunta...","answer":"Respuesta...","keyPoints":"Puntos"}]`;
         try {
-          let text = await callGeminiWithPDF(prompt);
-          text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-          const newCases = JSON.parse(text);
+          const text = await callGeminiWithPDF(prompt);
+          const newCases = parseGeminiJSON(text);
 
           newCases.forEach(c => clinicalCases.unshift({ id: Date.now() + Math.random(), ...c }));
           saveData('cases');
           appendChatMessage('ai', `✅ Se generaron **${newCases.length} Casos Clínicos** y se agregaron a la pestaña "Simulador Oral".`);
-        } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+        } catch (e) {
+          appendChatMessage('ai', e.isAIJsonError ? aiJsonErrorHTML("askPDFAction('cases')") : 'Error: ' + e.message);
+        }
 
       } else if (action === 'flashcards') {
         appendChatMessage('user', 'Crea 4 Flashcards de alto rendimiento de este PDF.');
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Extrayendo flashcards...');
 
-        const prompt = `${getNucleoContextForIA()} Crea 4 flashcards basadas en el documento adjunto. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). Formato JSON:
+        const prompt = `${getNucleoContextForIA()} Crea 4 flashcards basadas en el documento adjunto. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
 [{"tag":"Tema","front":"¿Pregunta?","back":"Respuesta"}]`;
         try {
-          let text = await callGeminiWithPDF(prompt);
-          text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-          const newCards = JSON.parse(text);
+          const text = await callGeminiWithPDF(prompt);
+          const newCards = parseGeminiJSON(text);
 
           newCards.forEach(c => flashcards.push({ id: Date.now() + Math.random(), ...c }));
           saveData('flashcards');
           appendChatMessage('ai', `✅ Se generaron **${newCards.length} Flashcards** en tu mazo de repaso.`);
-        } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+        } catch (e) {
+          appendChatMessage('ai', e.isAIJsonError ? aiJsonErrorHTML("askPDFAction('flashcards')") : 'Error: ' + e.message);
+        }
 
       } else if (action === 'pae') {
         generateAIPAEPlan();
@@ -1741,12 +1785,11 @@ Evalúa en máximo 4 párrafos concisos:
         appendChatMessage('user', 'Genera 5 preguntas de opción múltiple de este PDF para el Banco de Preguntas.');
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-teal-400"></i> Generando preguntas...');
 
-        const prompt = `${getNucleoContextForIA()} Genera exactamente 5 preguntas de opción múltiple tipo examen basadas en el documento adjunto. Cada pregunta debe tener 4 opciones y solo una correcta. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). Formato JSON:
+        const prompt = `${getNucleoContextForIA()} Genera exactamente 5 preguntas de opción múltiple tipo examen basadas en el documento adjunto. Cada pregunta debe tener 4 opciones y solo una correcta. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
 [{"tag":"Tema","question":"¿Pregunta?","options":["Opción A","Opción B","Opción C","Opción D"],"correctIndex":0}]`;
         try {
-          let text = await callGeminiWithPDF(prompt);
-          text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-          const newQuestions = JSON.parse(text);
+          const text = await callGeminiWithPDF(prompt);
+          const newQuestions = parseGeminiJSON(text);
 
           newQuestions.forEach(q => quizBank.push({
             id: Date.now() + Math.random(),
@@ -1758,7 +1801,9 @@ Evalúa en máximo 4 párrafos concisos:
           }));
           saveQuizBank();
           appendChatMessage('ai', `✅ Se generaron **${newQuestions.length} preguntas** y se agregaron al Banco de Preguntas para el semestre seleccionado en el header.`);
-        } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+        } catch (e) {
+          appendChatMessage('ai', e.isAIJsonError ? aiJsonErrorHTML("askPDFAction('quiz')") : 'Error: ' + e.message);
+        }
 
       } else if (action === 'summary') {
         appendChatMessage('user', 'Dame una síntesis estructurada para responder en examen oral sobre este documento.');
