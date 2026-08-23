@@ -137,8 +137,11 @@
           <button onclick="setBioDigitalSystem('cardio')" id="btn-bio-cardio" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
             <i class="fa-solid fa-heart-pulse"></i> 3. Corazón & Circulación
           </button>
+          <button onclick="setBioDigitalSystem('willis')" id="btn-bio-willis" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <i class="fa-solid fa-diagram-project"></i> 4. Polígono de Willis
+          </button>
           <button onclick="setBioDigitalSystem('neuro')" id="btn-bio-neuro" class="px-3.5 py-2 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-brain"></i> 4. Sistema Nervioso
+            <i class="fa-solid fa-brain"></i> 5. Sistema Nervioso
           </button>
         </div>
       </div>
@@ -149,11 +152,14 @@
           <div class="w-full h-[500px] md:h-[600px] relative bg-slate-950 rounded-xl overflow-hidden">
             <iframe id="biodigital-iframe"
               class="w-full h-full border-0 rounded-xl"
-              src="https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_muscular_whole.json&s=female&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false"
+              src="https://sketchfab.com/models/991eb96938be4d0d8fadee241a1063d3/embed?ui_theme=dark&autostart=1"
               allow="autoplay; fullscreen; xr-spatial-tracking"
               allowfullscreen>
             </iframe>
           </div>
+          <p class="text-[10px] text-slate-500 px-1 pt-1">
+            Modelo 3D cortesía de <a id="model-source-link" href="#" target="_blank" class="text-indigo-400 hover:underline">Sketchfab (licencia Creative Commons)</a>.
+          </p>
         </div>
 
         <!-- Panel Lateral: Ficha Descriptiva, Inervación & Examen Oral -->
@@ -721,8 +727,9 @@ graph TD
         badge: "Sistema Musculoesquelético",
         badgeColor: "text-rose-400 bg-rose-950/80 border-rose-800",
         btnColor: "bg-rose-600 text-white",
-        embedUrl: "https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_muscular_whole.json&s=female&camera=-150.4,128.314,-134.935,-0.011,90.122,4.701,0.127,0.983,0.132&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false",
-        desc: "Toca cualquier músculo dentro del visor 3D para seleccionarlo, aislarlo o retirarlo con la herramienta de disección.",
+        embedUrl: "https://sketchfab.com/models/991eb96938be4d0d8fadee241a1063d3/embed?ui_theme=dark&autostart=1",
+        sourceUrl: "https://sketchfab.com/3d-models/male-body-muscular-system-anatomy-study-991eb96938be4d0d8fadee241a1063d3",
+        desc: "Rota, acerca y explora el sistema muscular completo con el mouse o el dedo directamente en el visor 3D.",
         structures: [
           {
             name: "Manguito Rotador (Regla SIRS)",
@@ -755,7 +762,8 @@ graph TD
         badge: "Osteología / Esqueleto Axial",
         badgeColor: "text-cyan-400 bg-cyan-950/80 border-cyan-800",
         btnColor: "bg-cyan-600 text-white",
-        embedUrl: "https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_skeletal_whole.json&s=female&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false",
+        embedUrl: "https://sketchfab.com/models/faf0f3eaec554bcf854be2038993024f/embed?ui_theme=dark&autostart=1",
+        sourceUrl: "https://sketchfab.com/3d-models/human-anatomy-faf0f3eaec554bcf854be2038993024f",
         desc: "Eje axial con vértebras cervicales (C1-C7), raquis torácico, lumbar y sacro.",
         structures: [
           {
@@ -781,7 +789,8 @@ graph TD
         badge: "Sistema Cardiovascular",
         badgeColor: "text-amber-400 bg-amber-950/80 border-amber-800",
         btnColor: "bg-amber-600 text-white",
-        embedUrl: "https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_cardiovascular_whole.json&s=female&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false",
+        embedUrl: "https://sketchfab.com/models/9b0b079953b840bc9a13f524b60041e4/embed?ui_theme=dark&autostart=1",
+        sourceUrl: "https://sketchfab.com/3d-models/animated-full-human-body-anatomy-9b0b079953b840bc9a13f524b60041e4",
         desc: "Hemodinámica cardiovascular, cavidades cardíacas, cayado aórtico y red vascular.",
         structures: [
           {
@@ -802,12 +811,40 @@ graph TD
           }
         ]
       },
+      willis: {
+        title: "Polígono (Círculo) de Willis",
+        badge: "Circulación Arterial Cerebral",
+        badgeColor: "text-fuchsia-400 bg-fuchsia-950/80 border-fuchsia-800",
+        btnColor: "bg-fuchsia-600 text-white",
+        embedUrl: "https://sketchfab.com/models/253381fcbf7e4d22a5b2c79bd7165539/embed?ui_theme=dark&autostart=1",
+        sourceUrl: "https://sketchfab.com/3d-models/circle-of-willis-253381fcbf7e4d22a5b2c79bd7165539",
+        desc: "Anastomosis arterial en la base del encéfalo entre la circulación carotídea y vertebrobasilar. Clave para entender territorios de ACV.",
+        structures: [
+          {
+            name: "Arterias Comunicantes (Anterior y Posteriores)",
+            type: "Anillo Anastomótico",
+            origin_insertion: "Une ambas cerebrales anteriores (comunicante anterior) y cada carótida interna con la cerebral posterior homolateral (comunicantes posteriores).",
+            innervation: "N/A (estructura vascular).",
+            action: "Permite circulación colateral si se ocluye una carótida o vertebral.",
+            clinical_pearl: "Sitio más frecuente de aneurismas saculares -> causa típica de hemorragia subaracnoidea."
+          },
+          {
+            name: "Arterias Cerebrales (Anterior, Media, Posterior)",
+            type: "Ramas Terminales",
+            origin_insertion: "ACA y ACM nacen de la carótida interna; ACP nace del tronco basilar.",
+            innervation: "Irrigan: ACA -> zona medial/pierna; ACM -> cara/brazo (territorio más grande); ACP -> occipital/visión.",
+            action: "Distribución territorial específica del flujo sanguíneo cerebral.",
+            clinical_pearl: "ACV de ACM: hemiplejía faciobraquial contralateral + afasia (si es el hemisferio dominante)."
+          }
+        ]
+      },
       neuro: {
         title: "Encéfalo & Sistema Nervioso Central",
         badge: "Sistema Nervioso Central",
         badgeColor: "text-indigo-400 bg-indigo-950/80 border-indigo-800",
         btnColor: "bg-indigo-600 text-white",
-        embedUrl: "https://human.biodigital.com/widgets/healthline/?m=production/femaleAdult/female_system_anatomy_nervous_whole.json&s=female&initial=true&load-rotate=15&ui-fullscreen=false&ui-share=false",
+        embedUrl: "https://sketchfab.com/models/6ae262548bfd459cbfd1ec1e137a1bd6/embed?ui_theme=dark&autostart=1",
+        sourceUrl: "https://sketchfab.com/3d-models/brainstem-with-circle-of-willis-6ae262548bfd459cbfd1ec1e137a1bd6",
         desc: "Centros superiores de integración motora (Área 4 Brodmann), tronco encefálico y pares craneales.",
         structures: [
           {
@@ -846,6 +883,9 @@ graph TD
 
       const iframe = document.getElementById('biodigital-iframe');
       if (iframe) iframe.src = data.embedUrl;
+
+      const sourceLink = document.getElementById('model-source-link');
+      if (sourceLink) sourceLink.href = data.sourceUrl;
 
       document.getElementById('layer-badge').textContent = data.badge;
       document.getElementById('layer-badge').className = `text-xs font-bold uppercase tracking-wider ${data.badgeColor} px-3 py-1 rounded-full border`;
