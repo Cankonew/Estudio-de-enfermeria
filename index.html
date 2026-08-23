@@ -246,12 +246,17 @@
             Conversa sobre cualquier tema de enfermería. El tutor te explica, pero también te pregunta de vuelta — estilo ABP.
           </p>
         </div>
-        <div class="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 gap-1 text-xs">
-          <button onclick="setTutorMode('free')" id="btn-tutor-free" class="px-3 py-1.5 rounded-lg font-bold bg-violet-600 text-white transition">
-            Modo Libre
-          </button>
-          <button onclick="setTutorMode('docs')" id="btn-tutor-docs" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition">
-            Con mis Documentos
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 gap-1 text-xs">
+            <button onclick="setTutorMode('free')" id="btn-tutor-free" class="px-3 py-1.5 rounded-lg font-bold bg-violet-600 text-white transition">
+              Modo Libre
+            </button>
+            <button onclick="setTutorMode('docs')" id="btn-tutor-docs" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition">
+              Con mis Documentos
+            </button>
+          </div>
+          <button onclick="toggleTutorSpeakMode()" id="btn-tutor-speak" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition text-xs border border-slate-700" title="Leer las respuestas del tutor en voz alta">
+            🔊 Leer respuestas en voz alta
           </button>
         </div>
       </div>
@@ -266,6 +271,9 @@
 
         <form onsubmit="handleTutorMessage(event)" class="flex gap-2 pt-3 border-t border-slate-800">
           <input type="text" id="tutor-user-input" placeholder="Ej: No entiendo la diferencia entre shock hipovolémico y cardiogénico..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+          <button type="button" onclick="toggleTutorVoiceInput()" id="btn-tutor-mic" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition" title="Hablar en vez de escribir">
+            <i class="fa-solid fa-microphone"></i>
+          </button>
           <button type="submit" class="bg-violet-600 hover:bg-violet-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
@@ -1366,6 +1374,11 @@ graph TD
     // ==========================================
     // --- RECONOCIMIENTO DE VOZ & EVALUADOR IA --
     // ==========================================
+    // voiceInputTarget indica a qué campo enrutar los resultados del reconocimiento
+    // compartido: 'oral' (Simulador Oral) o 'tutor' (Tutor IA). Se reutiliza la misma
+    // instancia de SpeechRecognition en vez de crear una nueva por función.
+    let voiceInputTarget = 'oral';
+
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRec();
@@ -1378,13 +1391,43 @@ graph TD
         for (let i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
         }
-        document.getElementById('oral-transcript-text').textContent = transcript;
+        if (voiceInputTarget === 'tutor') {
+          document.getElementById('tutor-user-input').value = transcript;
+        } else {
+          document.getElementById('oral-transcript-text').textContent = transcript;
+        }
+      };
+
+      recognition.onend = () => {
+        if (voiceInputTarget !== 'tutor') return;
+        isTutorSpeechActive = false;
+        updateTutorMicUI(false);
+        voiceInputTarget = 'oral';
+        const input = document.getElementById('tutor-user-input');
+        if (input && input.value.trim()) {
+          handleTutorMessage({ preventDefault: () => {} });
+        }
+      };
+
+      recognition.onerror = (event) => {
+        if (voiceInputTarget !== 'tutor') return;
+        isTutorSpeechActive = false;
+        updateTutorMicUI(false);
+        voiceInputTarget = 'oral';
+        if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+          appendTutorMessage('tutor', '⚠️ No se pudo acceder al micrófono (revisa los permisos de tu navegador). Puedes seguir escribiendo tu pregunta normalmente.');
+        } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          appendTutorMessage('tutor', '⚠️ No se pudo reconocer tu voz. Puedes seguir escribiendo tu pregunta normalmente.');
+        }
       };
     }
 
     function toggleOralTimerWithVoice() {
       toggleOralTimer();
       if (!recognition) return;
+      voiceInputTarget = 'oral';
+      recognition.continuous = true;
+      recognition.interimResults = true;
 
       if (isOralRunning) {
         try {
@@ -2568,6 +2611,71 @@ Evalúa en máximo 4 párrafos concisos:
       document.getElementById('btn-tutor-docs').className = `px-3 py-1.5 rounded-lg font-bold transition ${mode === 'docs' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'}`;
     }
 
+    // --- VOZ DEL TUTOR IA (reutiliza el mismo `recognition` del Simulador Oral y speechSynthesis del Audio Repaso) ---
+    let isTutorSpeechActive = false;
+
+    function toggleTutorVoiceInput() {
+      if (!recognition) {
+        appendTutorMessage('tutor', '⚠️ Tu navegador no soporta reconocimiento de voz (esto ocurre sobre todo en Safari/iOS). Puedes seguir escribiendo tu pregunta normalmente en el campo de texto.');
+        return;
+      }
+
+      if (isTutorSpeechActive) {
+        recognition.stop();
+        return; // el estado y la UI se limpian en recognition.onend
+      }
+
+      voiceInputTarget = 'tutor';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'es-CO';
+      document.getElementById('tutor-user-input').value = '';
+
+      try {
+        recognition.start();
+        isTutorSpeechActive = true;
+        updateTutorMicUI(true);
+      } catch (err) {
+        isTutorSpeechActive = false;
+        voiceInputTarget = 'oral';
+        updateTutorMicUI(false);
+      }
+    }
+
+    function updateTutorMicUI(active) {
+      const btn = document.getElementById('btn-tutor-mic');
+      if (!btn) return;
+      btn.className = active
+        ? 'bg-rose-600 hover:bg-rose-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition animate-pulse'
+        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition';
+    }
+
+    let tutorSpeakEnabled = localStorage.getItem('study_tutor_speak') === 'true';
+
+    function toggleTutorSpeakMode() {
+      tutorSpeakEnabled = !tutorSpeakEnabled;
+      localStorage.setItem('study_tutor_speak', tutorSpeakEnabled ? 'true' : 'false');
+      updateTutorSpeakToggleUI();
+      if (!tutorSpeakEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+
+    function updateTutorSpeakToggleUI() {
+      const btn = document.getElementById('btn-tutor-speak');
+      if (!btn) return;
+      btn.className = tutorSpeakEnabled
+        ? 'px-3 py-1.5 rounded-lg font-bold transition text-xs bg-emerald-600 text-white'
+        : 'px-3 py-1.5 rounded-lg font-bold transition text-xs text-slate-400 hover:text-white border border-slate-700';
+    }
+
+    function speakTutorReply(text) {
+      if (!tutorSpeakEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text.replace(/[*_#`]/g, ''));
+      utter.lang = 'es-CO';
+      utter.rate = 0.98;
+      window.speechSynthesis.speak(utter);
+    }
+
     function appendTutorMessage(sender, text) {
       const box = document.getElementById('tutor-chat-box');
       const isUser = sender === 'user';
@@ -2599,6 +2707,7 @@ Evalúa en máximo 4 párrafos concisos:
         const reply = await callGeminiTutor();
         document.getElementById(thinkingId)?.remove();
         appendTutorMessage('tutor', reply);
+        speakTutorReply(reply);
         tutorChatHistory.push({ role: 'model', text: reply });
       } catch (err) {
         document.getElementById(thinkingId)?.remove();
@@ -2805,6 +2914,7 @@ Evalúa en máximo 4 párrafos concisos:
     window.addEventListener('DOMContentLoaded', async () => {
       applyVisibleTabsToNav();
       if (!visibleTabs.includes(currentTab)) switchTab(visibleTabs[0]);
+      updateTutorSpeakToggleUI();
       setBioDigitalSystem('muscles');
       renderCurrentCase();
       updateTimerDisplay();
