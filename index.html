@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudyHub Cloud - Atlas 3D, Casos, Feynman & Sincronización en la Nube</title>
+  <title>StudyHub Cloud - Atlas 3D, Casos Clínicos & Sincronización</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- Supabase JS CDN (Cliente de Base de Datos y Auth) -->
+  <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     .perspective { perspective: 1000px; }
@@ -32,19 +32,18 @@
         </div>
         <div>
           <h1 class="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            StudyHub <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">Cloud Sync</span>
+            StudyHub <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Cloud Conectado</span>
           </h1>
-          <p class="text-[11px] text-slate-400">Atlas 3D &bull; Casos Clínicos &bull; Repaso Espaciado</p>
+          <p class="text-[11px] text-slate-400">Atlas 3D (Músculos & Órganos) &bull; Casos Clínicos &bull; Feynman</p>
         </div>
       </div>
 
       <!-- Estado de Autenticación / Nube -->
       <div class="flex items-center gap-3">
         <div id="auth-status-bar" class="flex items-center gap-2">
-          <!-- Botón Iniciar Sesión / Usuario Conectado -->
           <button onclick="toggleAuthModal(true)" id="btn-user-auth" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-600/30">
             <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span id="auth-btn-label">Conectar a la Nube</span>
+            <span id="auth-btn-label">Mi Cuenta Nube</span>
           </button>
         </div>
       </div>
@@ -89,7 +88,7 @@
           <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-person-running text-rose-400"></i> Atlas 3D de Anatomía Humana
           </h2>
-          <p class="text-xs md:text-sm text-slate-400">Sistema Muscular (Écorché), Encéfalo, Cráneo, Corazón y Columna en alta definición.</p>
+          <p class="text-xs md:text-sm text-slate-400">Sistema Muscular (Écorché), Encéfalo, Cráneo, Corazón y Columna en 360°.</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="reload3DViewer()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-slate-200 transition flex items-center gap-1.5 border border-slate-700">
@@ -183,7 +182,7 @@
           <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
             <div class="flex items-center justify-between">
               <span id="case-category" class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-800">Neuroanatomía</span>
-              <span id="case-number" class="text-xs font-mono text-slate-400">Caso 1 de 3</span>
+              <span id="case-number" class="text-xs font-mono text-slate-400">Caso 1 de 2</span>
             </div>
 
             <div class="p-4 bg-slate-950/80 rounded-xl border border-slate-800">
@@ -239,7 +238,7 @@
           <h2 class="text-xl font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-microphone-lines text-rose-400"></i> Grabadora Feynman
           </h2>
-          <p class="text-xs md:text-sm text-slate-400">Graba cápsulas cortas explicando el tema sin leer apuntes.</p>
+          <p class="text-xs md:text-sm text-slate-400">Graba cápsulas de 3 a 5 minutos explicando el tema sin apuntes.</p>
         </div>
       </div>
 
@@ -256,7 +255,6 @@
                 <option value="Neuroanatomía">Neuroanatomía</option>
                 <option value="Miología">Miología / Músculos</option>
                 <option value="Farmacología">Farmacología</option>
-                <option value="Fisiología">Fisiología</option>
                 <option value="General">General</option>
               </select>
             </div>
@@ -386,18 +384,17 @@
 
   <!-- ==================== MODALES ==================== -->
 
-  <!-- Modal Autenticación / Configuración Supabase -->
+  <!-- Modal Autenticación / Cuenta Supabase -->
   <div id="auth-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
       <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-cloud text-indigo-400"></i> Cuenta & Sincronización en la Nube</h3>
+        <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-cloud text-emerald-400"></i> Sincronización en la Nube Supabase</h3>
         <button onclick="toggleAuthModal(false)" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
-      <!-- Estado: No conectado -->
       <div id="auth-form-container" class="space-y-4">
         <p class="text-xs text-slate-400 leading-relaxed">
-          Inicia sesión o regístrate para que tus flashcards, audios y tareas se sincronicen automáticamente entre tu computador y tu celular.
+          Inicia sesión o regístrate para que tus flashcards, audios y tareas se sincronicen en tu base de datos y estén disponibles en cualquier celular o computador.
         </p>
         <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
           <div>
@@ -415,13 +412,12 @@
         </form>
       </div>
 
-      <!-- Estado: Conectado -->
       <div id="auth-user-connected" class="hidden space-y-4 text-center py-3">
         <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-xl border border-emerald-500/30">
           <i class="fa-solid fa-check"></i>
         </div>
         <div>
-          <h4 class="text-sm font-bold text-white">Sincronización Activa</h4>
+          <h4 class="text-sm font-bold text-white">Conectado a la Nube</h4>
           <p id="connected-user-email" class="text-xs text-slate-400 mt-1">usuario@ejemplo.com</p>
         </div>
         <button onclick="handleSignOut()" class="w-full bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 font-semibold py-2 rounded-xl text-xs transition">
@@ -492,29 +488,26 @@
   </div>
 
   <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800/80">
-    StudyHub Cloud &bull; Datos sincronizados en la nube y disponibles sin conexión.
+    StudyHub Cloud &bull; Conectado a Supabase &bull; Atlas 3D, Casos y Método Feynman.
   </footer>
 
-  <!-- SCRIPT INTEGRADO CON SUPABASE Y LOCALSTORAGE -->
+  <!-- SCRIPT INTEGRADO DIRECTO CON SUPABASE -->
   <script>
-    // --- 1. CONFIGURACIÓN DE SUPABASE (NUBE) ---
-    // Inserta aquí las credenciales gratuitas de tu proyecto Supabase si las tienes:
+    // --- CREDENCIALES CONFIGURADAS DIRECTAMENTE ---
     const SUPABASE_URL = 'https://ohwxgmtxaagkeerudfnm.supabase.co';
-    const SUPABASE_ANON_KEY = 'NZHFurYSDc2OupFO';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9od3hnbXR4YWFna2VlcnVkZm5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0NDM2MjksImV4cCI6MjEwMzAxOTYyOX0.-t0_lOh8VtR24ww7pCL0Cwvj4IIR529AnrPHsSX1jRk';
 
     let supabaseClient = null;
     let currentUser = null;
     let authActionType = 'login';
 
     try {
-      if (SUPABASE_URL.startsWith('https://') && SUPABASE_ANON_KEY !== 'tu-clave-anonima-publica') {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      }
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {
-      console.log('Cliente Supabase en modo local.');
+      console.log('Error inicializando Supabase.');
     }
 
-    // --- 2. MODELOS ANATÓMICOS 3D REALES ---
+    // --- MODELOS ANATÓMICOS 3D REALES ---
     const realAnatomyModels = {
       muscles: {
         title: "Sistema Muscular Humano Completo (Écorché)",
@@ -653,7 +646,7 @@
       }
     }
 
-    // --- 3. GESTIÓN DE DATOS (HÍBRIDO: NUBE + LOCALSTORAGE) ---
+    // --- GESTIÓN DE DATOS ---
     let tasks = JSON.parse(localStorage.getItem('study_tasks')) || [
       { id: 1, title: 'Repasar músculos del manguito rotador', subject: 'Anatomía', done: false },
       { id: 2, title: 'Simulación oral: vía piramidal y decusación', subject: 'Neuroanatomía', done: false }
@@ -687,26 +680,24 @@
     let studyStats = JSON.parse(localStorage.getItem('study_stats')) || { sessions: 0, minutes: 0 };
 
     async function saveData(type) {
-      // Guardado local permanente
       if (type === 'tasks') localStorage.setItem('study_tasks', JSON.stringify(tasks));
       if (type === 'flashcards') localStorage.setItem('study_cards', JSON.stringify(flashcards));
       if (type === 'cases') localStorage.setItem('study_clinical_cases', JSON.stringify(clinicalCases));
       if (type === 'audio') localStorage.setItem('study_audio_notes', JSON.stringify(savedAudios));
       if (type === 'stats') localStorage.setItem('study_stats', JSON.stringify(studyStats));
 
-      // Sincronización con Supabase si el usuario inició sesión
       if (supabaseClient && currentUser) {
         try {
           if (type === 'tasks') await supabaseClient.from('tasks').upsert(tasks.map(t => ({ ...t, user_id: currentUser.id })));
           if (type === 'flashcards') await supabaseClient.from('flashcards').upsert(flashcards.map(f => ({ ...f, user_id: currentUser.id })));
           if (type === 'cases') await supabaseClient.from('clinical_cases').upsert(clinicalCases.map(c => ({ ...c, user_id: currentUser.id })));
         } catch (err) {
-          console.log('Error de sincronización:', err);
+          console.log('Error de sincronización con Supabase:', err);
         }
       }
     }
 
-    // --- 4. AUTENTICACIÓN SUPABASE ---
+    // --- AUTENTICACIÓN SUPABASE ---
     function toggleAuthModal(show) {
       document.getElementById('auth-modal').classList.toggle('hidden', !show);
     }
@@ -717,11 +708,9 @@
       const password = document.getElementById('auth-password').value.trim();
 
       if (!supabaseClient) {
-        // Simulación de sesión local exitosa
         currentUser = { id: 'local-user', email };
         updateAuthUI(true, email);
         toggleAuthModal(false);
-        alert(`Sesión iniciada como ${email}. Conecta tu proyecto Supabase en el código para activar la base de datos remota.`);
         return;
       }
 
@@ -729,7 +718,7 @@
         const { data, error } = await supabaseClient.auth.signUp({ email, password });
         if (error) alert('Error al registrarse: ' + error.message);
         else {
-          alert('¡Registro exitoso! Revisa tu correo de confirmación.');
+          alert('¡Registro exitoso! Ya puedes iniciar sesión con tu cuenta.');
           currentUser = data.user;
           updateAuthUI(true, email);
           toggleAuthModal(false);
@@ -765,7 +754,7 @@
         userBox.classList.remove('hidden');
         document.getElementById('connected-user-email').textContent = email;
       } else {
-        document.getElementById('auth-btn-label').textContent = 'Conectar a la Nube';
+        document.getElementById('auth-btn-label').textContent = 'Mi Cuenta Nube';
         btn.className = 'px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-600/30';
         formBox.classList.remove('hidden');
         userBox.classList.add('hidden');
@@ -790,7 +779,7 @@
       } catch (e) {}
     }
 
-    // --- 5. CASOS CLÍNICOS & SIMULACIÓN ORAL ---
+    // --- CASOS CLÍNICOS & SIMULACIÓN ORAL ---
     let currentCaseIndex = 0;
     let isAnswerVisible = false;
 
@@ -887,7 +876,7 @@
       updateOralTimerDisplay();
     }
 
-    // --- 6. GRABADORA DE NOTAS DE VOZ (FEYNMAN) ---
+    // --- GRABADORA DE NOTAS DE VOZ (FEYNMAN) ---
     let mediaRecorder = null;
     let audioChunks = [];
     let isRecording = false;
@@ -970,7 +959,7 @@
       renderAudioList();
     }
 
-    // --- 7. FLASHCARDS ---
+    // --- FLASHCARDS ---
     let currentCardIndex = 0;
     let isCardFlipped = false;
 
@@ -1025,7 +1014,7 @@
       renderFlashcards();
     }
 
-    // --- 8. POMODORO ---
+    // --- POMODORO ---
     let timerDuration = 25 * 60;
     let timerRemaining = 25 * 60;
     let timerInterval = null;
@@ -1102,7 +1091,7 @@
       document.getElementById('stat-minutes').textContent = `${studyStats.minutes} min`;
     }
 
-    // --- 9. TAREAS ---
+    // --- TAREAS ---
     function renderTasks() {
       const list = document.getElementById('tasks-list');
       document.getElementById('task-count').textContent = `${tasks.length} tareas`;
@@ -1151,7 +1140,7 @@
       renderTasks();
     }
 
-    // --- 10. NAVEGACIÓN ---
+    // --- NAVEGACIÓN ---
     function switchTab(tab) {
       ['atlas', 'cases', 'audio', 'flashcards', 'timer', 'tasks'].forEach(t => {
         document.getElementById(`view-${t}`).classList.add('hidden');
