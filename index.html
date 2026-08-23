@@ -43,15 +43,15 @@
 
       <!-- Estado de Autenticación / Nube -->
       <div class="flex items-center gap-2">
-        <select id="semester-selector" onchange="saveCurrentSemester()" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-500" title="Semestre actual">
-          <option value="1">1er Sem.</option>
-          <option value="2">2do Sem.</option>
-          <option value="3">3er Sem.</option>
-          <option value="4">4to Sem.</option>
-          <option value="5">5to Sem.</option>
-          <option value="6">6to Sem.</option>
-          <option value="7">7mo Sem.</option>
-          <option value="8">8vo Sem.</option>
+        <select id="semester-selector" onchange="saveCurrentSemester()" class="max-w-[170px] truncate bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-500" title="Núcleo temático actual (Unisanitas)">
+          <option value="1">Sem I: Origen de la Vida</option>
+          <option value="2">Sem II: Proceso Salud-Enfermedad I</option>
+          <option value="3">Sem III: Proceso Salud-Enfermedad II</option>
+          <option value="4">Sem IV: Cuidado al Joven/Adulto/Adulto Mayor I</option>
+          <option value="5">Sem V: Cuidado al Joven/Adulto/Adulto Mayor II</option>
+          <option value="6">Sem VI: Cuidado a la Mujer, Gestante y RN</option>
+          <option value="7">Sem VII: Cuidado al Niño, Adolescente y Familia</option>
+          <option value="8">Sem VIII: Gerencia Integral del Cuidado</option>
         </select>
         <button onclick="toggleSearchModal(true)" class="w-9 h-9 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl transition" title="Buscar en toda la app">
           <i class="fa-solid fa-magnifying-glass"></i>
@@ -458,15 +458,15 @@
           <div>
             <label class="text-xs font-semibold text-slate-400 block mb-1.5">Semestre / Materia:</label>
             <select id="quiz-semester-filter" onchange="updateQuizPoolInfo()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-teal-500">
-              <option value="all">Todos los semestres</option>
-              <option value="1">1er Sem.</option>
-              <option value="2">2do Sem.</option>
-              <option value="3">3er Sem.</option>
-              <option value="4">4to Sem.</option>
-              <option value="5">5to Sem.</option>
-              <option value="6">6to Sem.</option>
-              <option value="7">7mo Sem.</option>
-              <option value="8">8vo Sem.</option>
+              <option value="all">Todos los núcleos</option>
+              <option value="1">Sem I: Origen de la Vida</option>
+              <option value="2">Sem II: Proceso Salud-Enfermedad I</option>
+              <option value="3">Sem III: Proceso Salud-Enfermedad II</option>
+              <option value="4">Sem IV: Cuidado al Joven/Adulto/Adulto Mayor I</option>
+              <option value="5">Sem V: Cuidado al Joven/Adulto/Adulto Mayor II</option>
+              <option value="6">Sem VI: Cuidado a la Mujer, Gestante y RN</option>
+              <option value="7">Sem VII: Cuidado al Niño, Adolescente y Familia</option>
+              <option value="8">Sem VIII: Gerencia Integral del Cuidado</option>
             </select>
           </div>
           <div>
@@ -893,16 +893,16 @@ graph TD
           <p class="text-sm text-slate-400">Recuperación activa y repaso espaciado.</p>
         </div>
         <div class="flex items-center gap-2">
-          <select id="flashcard-semester-filter" onchange="renderFlashcards()" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-2 focus:outline-none focus:border-indigo-500">
-            <option value="all">Todos los semestres</option>
-            <option value="1">1er Sem.</option>
-            <option value="2">2do Sem.</option>
-            <option value="3">3er Sem.</option>
-            <option value="4">4to Sem.</option>
-            <option value="5">5to Sem.</option>
-            <option value="6">6to Sem.</option>
-            <option value="7">7mo Sem.</option>
-            <option value="8">8vo Sem.</option>
+          <select id="flashcard-semester-filter" onchange="renderFlashcards()" class="max-w-[170px] truncate bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-2 focus:outline-none focus:border-indigo-500" title="Filtrar por núcleo temático">
+            <option value="all">Todos los núcleos</option>
+            <option value="1">Sem I: Origen de la Vida</option>
+            <option value="2">Sem II: Proceso Salud-Enfermedad I</option>
+            <option value="3">Sem III: Proceso Salud-Enfermedad II</option>
+            <option value="4">Sem IV: Cuidado al Joven/Adulto/Adulto Mayor I</option>
+            <option value="5">Sem V: Cuidado al Joven/Adulto/Adulto Mayor II</option>
+            <option value="6">Sem VI: Cuidado a la Mujer, Gestante y RN</option>
+            <option value="7">Sem VII: Cuidado al Niño, Adolescente y Familia</option>
+            <option value="8">Sem VIII: Gerencia Integral del Cuidado</option>
           </select>
           <button onclick="toggleCardModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
             <i class="fa-solid fa-plus"></i> Crear Manual
@@ -1090,6 +1090,31 @@ graph TD
     try {
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {}
+
+    // =========================================================================
+    // --- NÚCLEOS TEMÁTICOS (CURRÍCULO INTEGRADO UNISANITAS) ---
+    // El valor interno sigue siendo el número de semestre (1-8) para no romper
+    // los datos ya guardados en Supabase; solo cambia lo que se muestra.
+    // =========================================================================
+    const NUCLEOS_UNISANITAS = {
+      '1': 'Sem I: Origen de la Vida',
+      '2': 'Sem II: Proceso Salud-Enfermedad I',
+      '3': 'Sem III: Proceso Salud-Enfermedad II',
+      '4': 'Sem IV: Cuidado al Joven/Adulto/Adulto Mayor I',
+      '5': 'Sem V: Cuidado al Joven/Adulto/Adulto Mayor II',
+      '6': 'Sem VI: Cuidado a la Mujer, Gestante y RN',
+      '7': 'Sem VII: Cuidado al Niño, Adolescente y Familia',
+      '8': 'Sem VIII: Gerencia Integral del Cuidado'
+    };
+
+    function getNucleoLabel(semesterValue) {
+      return NUCLEOS_UNISANITAS[semesterValue] || `Semestre ${semesterValue}`;
+    }
+
+    function getNucleoContextForIA() {
+      const list = Object.entries(NUCLEOS_UNISANITAS).map(([num, name]) => `Semestre ${num} = "${name}"`).join('; ');
+      return `Contexto curricular: este estudiante cursa Enfermería en Unisanitas (Colombia), donde el plan de estudios es un currículo INTEGRADO POR NÚCLEOS TEMÁTICOS, no por asignaturas tradicionales (no existen materias sueltas como "Farmacología II" o "Fisiología I"; el contenido de cada semestre se aborda de forma integrada dentro de un único núcleo). Los 8 núcleos son: ${list}. El estudiante está cursando actualmente: "${getNucleoLabel(currentSemester)}". Alinea tus explicaciones, ejemplos y la forma de nombrar los temas a la lógica de núcleos integrados de Unisanitas, no a materias tradicionales sueltas.`;
+    }
 
     // =========================================================================
     // --- BASE DE DATOS DE BIODIGITAL HUMAN 3D (MODELOS OFICIALES ACTIVOS) ---
@@ -1653,7 +1678,7 @@ Evalúa en máximo 4 párrafos concisos:
         appendChatMessage('user', 'Genera 5 preguntas de opción múltiple de este PDF para el Banco de Preguntas.');
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-teal-400"></i> Generando preguntas...');
 
-        const prompt = `Genera exactamente 5 preguntas de opción múltiple tipo examen basadas en el documento adjunto. Cada pregunta debe tener 4 opciones y solo una correcta. Formato JSON:
+        const prompt = `${getNucleoContextForIA()} Genera exactamente 5 preguntas de opción múltiple tipo examen basadas en el documento adjunto. Cada pregunta debe tener 4 opciones y solo una correcta. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). Formato JSON:
 [{"tag":"Tema","question":"¿Pregunta?","options":["Opción A","Opción B","Opción C","Opción D"],"correctIndex":0}]`;
         try {
           let text = await callGeminiWithPDF(prompt);
@@ -2512,7 +2537,7 @@ Evalúa en máximo 4 párrafos concisos:
         throw new Error('Sin API Key');
       }
 
-      const systemInstruction = `Eres un tutor de enfermería para un estudiante colombiano que estudia con metodología ABP (aprendizaje basado en problemas), actualmente entre 2do y 8vo semestre. Tu estilo es socrático: no des solo la respuesta directa, explica el concepto Y haz una pregunta de vuelta para que el estudiante razone (por ejemplo "¿por qué crees que pasa eso?" o "¿qué esperarías ver en un paciente con...?"). Sé breve y claro, en español, con lenguaje clínico correcto. Si el estudiante responde bien a tu pregunta, confírmalo y profundiza un poco más; si responde mal, corrígelo con amabilidad y vuelve a explicar.`;
+      const systemInstruction = `Eres un tutor de enfermería para un estudiante colombiano que estudia con metodología ABP (aprendizaje basado en problemas). ${getNucleoContextForIA()} Tu estilo es socrático: no des solo la respuesta directa, explica el concepto Y haz una pregunta de vuelta para que el estudiante razone (por ejemplo "¿por qué crees que pasa eso?" o "¿qué esperarías ver en un paciente con...?"). Sé breve y claro, en español, con lenguaje clínico correcto. Si el estudiante responde bien a tu pregunta, confírmalo y profundiza un poco más; si responde mal, corrígelo con amabilidad y vuelve a explicar.`;
 
       const historyText = tutorChatHistory.map(m => `${m.role === 'user' ? 'Estudiante' : 'Tutor'}: ${m.text}`).join('\n');
       let promptText = `${systemInstruction}\n\nConversación hasta ahora:\n${historyText}\n\nResponde como el Tutor al último mensaje del estudiante.`;
