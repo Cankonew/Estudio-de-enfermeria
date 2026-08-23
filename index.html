@@ -2094,7 +2094,7 @@ Evalúa en máximo 4 párrafos concisos:
         tutorChatHistory.push({ role: 'model', text: reply });
       } catch (err) {
         document.getElementById(thinkingId)?.remove();
-        appendTutorMessage('tutor', 'Hubo un error al conectar con la IA. Revisa tu clave de Gemini en "Mi Cuenta & IA".');
+        appendTutorMessage('tutor', `⚠️ Error: ${err.message || 'No se pudo conectar con la IA.'}`);
       }
     }
 
