@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudyHub Pro - Atlas Anatómico 3D por Capas, Casos & Flashcards</title>
+  <title>StudyHub Pro Clinical Suite - Atlas 3D, PAE, Dosificación & Notebook IA</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Mermaid.js para Mapas Conceptuales y Diagramas -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
   <style>
     .perspective { perspective: 1000px; }
     .transform-style-3d { transform-style: preserve-3d; }
@@ -32,35 +35,48 @@
         </div>
         <div>
           <h1 class="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            StudyHub <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Atlas por Capas 3D</span>
+            StudyHub <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1"><i class="fa-solid fa-stethoscope"></i> Clinical Suite Pro</span>
           </h1>
-          <p class="text-[11px] text-slate-400">Disección por Capas &bull; Nombres &bull; Inervación &bull; Clínica</p>
+          <p class="text-[11px] text-slate-400">Atlas 3D &bull; PAE &bull; Dosificación &bull; Notebook IA &bull; Casos</p>
         </div>
       </div>
 
       <!-- Estado de Autenticación / Nube -->
-      <div class="flex items-center gap-3">
-        <div id="auth-status-bar" class="flex items-center gap-2">
-          <button onclick="toggleAuthModal(true)" id="btn-user-auth" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-600/30">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span id="auth-btn-label">Mi Cuenta Nube</span>
-          </button>
-        </div>
+      <div class="flex items-center gap-2">
+        <button onclick="toggleAudioStudyMode()" id="btn-audio-mode" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5" title="Modo Manos Libres con Voz">
+          <i class="fa-solid fa-headphones"></i> <span class="hidden sm:inline">Audio Repaso</span>
+        </button>
+        <button onclick="toggleAuthModal(true)" id="btn-user-auth" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-600/30">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span id="auth-btn-label">Mi Cuenta & IA</span>
+        </button>
       </div>
 
-      <!-- Barra de Pestañas -->
+      <!-- Barra de Pestañas Completa -->
       <nav class="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 overflow-x-auto max-w-full gap-1 w-full md:w-auto">
-        <button onclick="switchTab('atlas')" id="nav-atlas" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap">
-          <i class="fa-solid fa-layer-group text-indigo-200"></i>
-          <span>Atlas 3D por Capas</span>
+        <button onclick="switchTab('notebook')" id="nav-notebook" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap">
+          <i class="fa-solid fa-book-bookmark text-amber-300"></i>
+          <span>Notebook IA (PDF)</span>
+        </button>
+        <button onclick="switchTab('atlas')" id="nav-atlas" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-layer-group"></i>
+          <span>Atlas 3D</span>
         </button>
         <button onclick="switchTab('cases')" id="nav-cases" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-file-waveform"></i>
-          <span>Casos & Examen Oral</span>
+          <span>Simulador Oral (Voz)</span>
         </button>
-        <button onclick="switchTab('audio')" id="nav-audio" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
-          <i class="fa-solid fa-microphone-lines"></i>
-          <span>Notas Feynman</span>
+        <button onclick="switchTab('pae')" id="nav-pae" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-notes-medical text-rose-400"></i>
+          <span>PAE (NANDA-NOC-NIC)</span>
+        </button>
+        <button onclick="switchTab('calc')" id="nav-calc" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-calculator text-cyan-400"></i>
+          <span>Dosificación & Goteo</span>
+        </button>
+        <button onclick="switchTab('diagrams')" id="nav-diagrams" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-diagram-project text-emerald-400"></i>
+          <span>Mapas & Vancouver</span>
         </button>
         <button onclick="switchTab('flashcards')" id="nav-flashcards" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-clone"></i>
@@ -70,10 +86,6 @@
           <i class="fa-solid fa-stopwatch"></i>
           <span>Pomodoro</span>
         </button>
-        <button onclick="switchTab('tasks')" id="nav-tasks" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
-          <i class="fa-solid fa-list-check"></i>
-          <span>Tareas</span>
-        </button>
       </nav>
     </div>
   </header>
@@ -81,50 +93,128 @@
   <!-- Contenedor Principal -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
 
-    <!-- ==================== 0. ATLAS 3D ANATÓMICO POR CAPAS ==================== -->
-    <section id="view-atlas" class="space-y-6">
+    <!-- ==================== 1. NOTEBOOK IA (PDFs) ==================== -->
+    <section id="view-notebook" class="space-y-6">
+      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-book-open-reader text-amber-400"></i> Notebook IA: Procesamiento Clínico de PDFs
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400">
+            Sube capítulos, guías clínicas o artículos para extraer casos clínicos, flashcards, planes PAE o diagramas conceptuales automáticos.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-1 space-y-4">
+          <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-file-arrow-up text-indigo-400"></i> Cargar Archivo PDF
+            </h3>
+
+            <div id="pdf-dropzone" onclick="document.getElementById('pdf-file-input').click()"
+              class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/60 flex flex-col items-center justify-center space-y-2">
+              <i class="fa-solid fa-file-pdf text-3xl text-rose-500"></i>
+              <p id="pdf-file-name" class="text-xs text-slate-300 font-semibold">Toca para seleccionar tu archivo PDF</p>
+              <p class="text-[10px] text-slate-500">Guías clínicas, capítulos o diapositivas (hasta 50 MB)</p>
+              <input type="file" id="pdf-file-input" accept="application/pdf,image/*" class="hidden" onchange="handlePDFUpload(event)">
+            </div>
+
+            <div class="space-y-2 pt-1">
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Acciones con IA:</label>
+              
+              <button onclick="askPDFAction('cases')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-stethoscope text-emerald-400"></i> Crear 2 Casos Clínicos del PDF
+              </button>
+
+              <button onclick="askPDFAction('flashcards')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-clone text-indigo-400"></i> Generar 4 Flashcards del PDF
+              </button>
+
+              <button onclick="askPDFAction('pae')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-notes-medical text-rose-400"></i> Extraer Plan PAE (NANDA-NOC-NIC)
+              </button>
+
+              <button onclick="askPDFAction('summary')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-brain text-amber-400"></i> Síntesis & Puntos de Examen Oral
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between h-[580px]">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <h3 class="text-sm font-bold text-white">Análisis & Preguntas del Documento</h3>
+            </div>
+            <span id="pdf-status-badge" class="text-[10px] font-bold uppercase bg-slate-800 text-slate-400 px-2.5 py-1 rounded-full">Sin PDF cargado</span>
+          </div>
+
+          <div id="pdf-chat-box" class="flex-1 overflow-y-auto space-y-3 py-3 pr-2 text-xs leading-relaxed text-slate-200">
+            <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 space-y-2">
+              <p class="font-semibold text-slate-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-sparkles text-amber-400"></i> Asistente de Lectura Crítica:
+              </p>
+              <p>1. Carga tu PDF (o capítulos individuales) en el panel izquierdo.</p>
+              <p>2. Ejecuta una acción rápida o haz preguntas directas sobre el contenido.</p>
+              <p>3. Todos los casos, flashcards y planes generados se agregan a tu suite de estudio.</p>
+            </div>
+          </div>
+
+          <form onsubmit="handlePDFUserQuery(event)" class="flex gap-2 pt-3 border-t border-slate-800">
+            <input type="text" id="pdf-user-prompt" placeholder="Pregunta algo sobre el documento cargado..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. ATLAS 3D POR CAPAS ==================== -->
+    <section id="view-atlas" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-layer-group text-indigo-400"></i> Atlas Anatómico de Disección 3D por Capas
           </h2>
           <p class="text-xs md:text-sm text-slate-400">
-            Alterna entre planos anatómicos (músculos, huesos, vasos, nervios y órganos) con fichas descriptivas clínicas de cada estructura.
+            Disección con nombres estructurados, origen/inserción, inervación y correlación clínica para examen oral.
           </p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="reload3DViewer()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-slate-200 transition flex items-center gap-1.5 border border-slate-700">
-            <i class="fa-solid fa-arrows-rotate"></i> Recargar Visor
+            <i class="fa-solid fa-arrows-rotate"></i> Recargar
           </button>
         </div>
       </div>
 
-      <!-- Selector de Capas Anatómicas (Dissection Levels) -->
       <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
         <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i class="fa-solid fa-sliders text-indigo-400"></i> Plano / Capa Anatómica:
+          <i class="fa-solid fa-sliders text-indigo-400"></i> Capa Anatómica:
         </span>
         <div class="flex flex-wrap gap-2 text-xs">
           <button onclick="setAnatomyLayer('muscles_full')" id="btn-layer-muscles_full" class="px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-person-running"></i> 1. Músculos Superficiales & Profundos
+            <i class="fa-solid fa-person-running"></i> 1. Músculos
           </button>
           <button onclick="setAnatomyLayer('neuro_brain')" id="btn-layer-neuro_brain" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-brain"></i> 2. Sistema Nervioso & Pares
+            <i class="fa-solid fa-brain"></i> 2. Sistema Nervioso
           </button>
           <button onclick="setAnatomyLayer('cardio_visceral')" id="btn-layer-cardio_visceral" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-heart-pulse"></i> 3. Corazón & Grandes Vasos
+            <i class="fa-solid fa-heart-pulse"></i> 3. Corazón & Vasos
           </button>
           <button onclick="setAnatomyLayer('skeletal_spine')" id="btn-layer-skeletal_spine" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-bone"></i> 4. Columna & Canal Raquídeo
+            <i class="fa-solid fa-bone"></i> 4. Columna & Médula
           </button>
           <button onclick="setAnatomyLayer('skull_base')" id="btn-layer-skull_base" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-skull"></i> 5. Cráneo & Forámenes
+            <i class="fa-solid fa-skull"></i> 5. Cráneo
           </button>
         </div>
       </div>
 
       <div class="grid lg:grid-cols-3 gap-6">
-        <!-- Visor 3D Interactivo con Anotaciones y Puntos de Interés -->
         <div class="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-2xl p-2 relative shadow-2xl overflow-hidden flex flex-col">
           <div class="w-full h-[480px] md:h-[560px] relative bg-slate-950 rounded-xl overflow-hidden">
             <iframe id="anatomy-iframe-viewer"
@@ -136,67 +226,44 @@
           </div>
         </div>
 
-        <!-- Panel de Exploración por Estructura con Nombres, Inervación y Clínica -->
         <div class="space-y-4 flex flex-col justify-between">
           <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-              <span id="layer-badge" class="text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-950/80 px-3 py-1 rounded-full border border-rose-800">
-                Plano Muscular (Miología)
-              </span>
+              <span id="layer-badge" class="text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-950/80 px-3 py-1 rounded-full border border-rose-800">Plano Muscular</span>
             </div>
 
             <div>
-              <h3 id="layer-title" class="text-xl font-bold text-white mb-1">Músculos del Tórax, Hombro y Extremidades</h3>
-              <p id="layer-desc" class="text-xs text-slate-300 leading-relaxed">
-                Visualización tridimensional con nombres anatómicos estructurados, origen, inserción y correlación clínica.
-              </p>
+              <h3 id="layer-title" class="text-xl font-bold text-white mb-1">Músculos</h3>
+              <p id="layer-desc" class="text-xs text-slate-300 leading-relaxed"></p>
             </div>
 
-            <!-- Selector de Estructuras Específicas dentro de la Capa -->
             <div class="space-y-2">
-              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Seleccionar Estructura Específica:</label>
-              <div id="sub-structure-chips" class="flex flex-wrap gap-1.5">
-                <!-- Se inyectan con JS -->
-              </div>
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Estructura:</label>
+              <div id="sub-structure-chips" class="flex flex-wrap gap-1.5"></div>
             </div>
 
-            <!-- Ficha Técnica de la Estructura Seleccionada -->
-            <div id="structure-detail-box" class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2.5 text-xs">
-              <!-- Detalle dinámico -->
-            </div>
+            <div id="structure-detail-box" class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2.5 text-xs"></div>
 
             <button onclick="sendCurrentStructureToFlashcards()" class="w-full bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
-              <i class="fa-solid fa-file-circle-plus"></i> Convertir en Flashcard de Repaso
+              <i class="fa-solid fa-file-circle-plus"></i> Guardar como Flashcard de Repaso
             </button>
-          </div>
-
-          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5">
-            <h4 class="text-xs font-bold text-slate-200 mb-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-hand-pointer text-emerald-400"></i> Controles del Visor 3D:
-            </h4>
-            <p class="text-[11px] text-slate-400 leading-relaxed">
-              <strong>Rotar:</strong> Clic izquierdo / 1 dedo &bull; <strong>Zoom:</strong> Rueda del ratón / Pellizco &bull; <strong>Desplazar:</strong> Clic derecho / 2 dedos. Toca los números dentro del modelo para enfocar puntos anatómicos específicos.
-            </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ==================== 1. CASOS CLÍNICOS & EXAMEN ORAL ==================== -->
+    <!-- ==================== 3. SIMULADOR ORAL CON EVALUADOR DE VOZ ==================== -->
     <section id="view-cases" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div>
           <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-stethoscope text-emerald-400"></i> Simulador de Casos Clínicos & Examen Oral
+            <i class="fa-solid fa-microphone-lines text-emerald-400"></i> Simulador de Examen Oral con Reconocimiento de Voz
           </h2>
-          <p class="text-xs md:text-sm text-slate-400">Regla 30/70: 30% teoría, 70% responder preguntas orales en voz alta bajo tiempo.</p>
+          <p class="text-xs md:text-sm text-slate-400">Responde en voz alta durante 90 segundos. La IA transcribirá tu respuesta y la evaluará contra la rúbrica.</p>
         </div>
-        <div class="flex gap-2">
-          <button onclick="getRandomClinicalCase()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/30">
+        <div class="flex flex-wrap gap-2">
+          <button onclick="getRandomClinicalCase()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5">
             <i class="fa-solid fa-shuffle"></i> Caso Aleatorio
-          </button>
-          <button onclick="toggleCaseModal(true)" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
-            <i class="fa-solid fa-plus"></i> Crear Caso
           </button>
         </div>
       </div>
@@ -206,7 +273,7 @@
           <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
             <div class="flex items-center justify-between">
               <span id="case-category" class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-800">Neuroanatomía</span>
-              <span id="case-number" class="text-xs font-mono text-slate-400">Caso 1 de 3</span>
+              <span id="case-number" class="text-xs font-mono text-slate-400">Caso 1</span>
             </div>
 
             <div class="p-4 bg-slate-950/80 rounded-xl border border-slate-800">
@@ -219,14 +286,34 @@
               <p id="case-question" class="text-sm md:text-base text-white font-semibold">¿Pregunta?</p>
             </div>
 
-            <div class="pt-2">
-              <button onclick="toggleCaseAnswer()" id="btn-toggle-answer" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl text-sm transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-eye" id="icon-eye-answer"></i> <span id="text-btn-answer">Revelar Rúbrica Oral</span>
+            <!-- Transcripción en Vivo de tu Respuesta Oral -->
+            <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                  <i class="fa-solid fa-microphone text-rose-500 animate-pulse" id="oral-mic-icon"></i> Tu Transcripción Oral:
+                </span>
+                <span id="oral-stt-status" class="text-[10px] text-slate-500 uppercase">Micrófono inactivo</span>
+              </div>
+              <p id="oral-transcript-text" class="text-xs text-slate-300 italic min-h-[40px]">Presiona "Iniciar Respuesta por Voz" para comenzar a responder...</p>
+            </div>
+
+            <!-- Evaluación de la IA -->
+            <div id="oral-ai-feedback" class="hidden p-4 bg-indigo-950/40 border border-indigo-800 rounded-xl space-y-2 text-xs">
+              <div class="font-bold text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap"></i> Retroalimentación Docente con IA:</div>
+              <p id="oral-feedback-content" class="text-slate-200 leading-relaxed"></p>
+            </div>
+
+            <div class="pt-2 flex gap-2">
+              <button onclick="toggleCaseAnswer()" id="btn-toggle-answer" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold py-3 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-eye" id="icon-eye-answer"></i> <span id="text-btn-answer">Ver Rúbrica Modelo</span>
+              </button>
+              <button onclick="evaluateOralResponseWithAI()" id="btn-eval-oral" class="px-4 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-bold py-3 rounded-xl text-xs transition flex items-center gap-1.5 shadow-lg">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Evaluar con IA
               </button>
             </div>
 
             <div id="case-answer-box" class="hidden p-5 bg-slate-950 rounded-xl border border-emerald-900/60 space-y-3">
-              <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider"><i class="fa-solid fa-clipboard-check"></i> Respuesta Modelo / Rúbrica</div>
+              <div class="flex items-center gap-2 text-emerald-400 font-bold text-xs uppercase tracking-wider"><i class="fa-solid fa-clipboard-check"></i> Rúbrica de Respuesta Modelo</div>
               <p id="case-answer-text" class="text-sm text-slate-200 leading-relaxed"></p>
               <div class="pt-2 border-t border-slate-800 flex flex-wrap gap-2 text-[11px] text-slate-400">
                 <span class="font-bold text-slate-300">Puntos Clave:</span>
@@ -238,13 +325,13 @@
 
         <div class="space-y-6">
           <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-stopwatch text-amber-400"></i> Reloj de Exposición Verbal (90s)</h3>
+            <h3 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-stopwatch text-amber-400"></i> Reloj de Exposición Oral (90s)</h3>
             <div class="text-center py-4 bg-slate-950 rounded-xl border border-slate-800">
               <div id="oral-timer-display" class="text-5xl font-black font-mono text-amber-400">01:30</div>
             </div>
             <div class="flex gap-2">
-              <button onclick="toggleOralTimer()" id="btn-oral-toggle" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-play" id="icon-oral-play"></i> Iniciar Respuesta
+              <button onclick="toggleOralTimerWithVoice()" id="btn-oral-toggle" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-amber-600/30">
+                <i class="fa-solid fa-microphone"></i> Iniciar Respuesta por Voz
               </button>
               <button onclick="resetOralTimer()" class="px-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs transition">
                 <i class="fa-solid fa-rotate-right"></i>
@@ -255,64 +342,206 @@
       </div>
     </section>
 
-    <!-- ==================== 2. NOTAS DE VOZ (FEYNMAN) ==================== -->
-    <section id="view-audio" class="hidden space-y-6">
+    <!-- ==================== 4. PROCESO DE ATENCIÓN DE ENFERMERÍA (PAE / NANDA-NOC-NIC) ==================== -->
+    <section id="view-pae" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div>
-          <h2 class="text-xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-microphone-lines text-rose-400"></i> Grabadora Feynman
+          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-notes-medical text-rose-400"></i> Plan de Cuidados & Metodología PAE
           </h2>
-          <p class="text-xs md:text-sm text-slate-400">Graba cápsulas cortas explicando el tema en voz alta sin leer apuntes.</p>
+          <p class="text-xs md:text-sm text-slate-400">
+            Estructuración estandarizada del Proceso de Atención de Enfermería: Valoración, Diagnóstico NANDA, Resultados NOC e Intervenciones NIC.
+          </p>
         </div>
+        <button onclick="generateAIPAEPlan()" id="btn-gen-pae" class="px-4 py-2 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-lg">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Generar PAE Completo con IA
+        </button>
       </div>
 
-      <div class="grid lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-1 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 flex flex-col justify-between">
-          <div class="space-y-3">
-            <div>
-              <label class="text-xs font-bold text-slate-300 uppercase block mb-1">Tema</label>
-              <input type="text" id="voice-note-title" placeholder="Ej. Inervación del plexo braquial..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-rose-500">
-            </div>
-            <div>
-              <label class="text-xs font-bold text-slate-300 uppercase block mb-1">Materia</label>
-              <select id="voice-note-tag" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-rose-500">
-                <option value="Miología">Miología / Músculos</option>
-                <option value="Neuroanatomía">Neuroanatomía</option>
-                <option value="Farmacología">Farmacología</option>
-                <option value="Fisiología">Fisiología</option>
-                <option value="General">General</option>
-              </select>
-            </div>
+      <div class="grid lg:grid-cols-2 gap-6">
+        <!-- 1. Valoración & Diagnóstico NANDA -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex items-center gap-2 text-indigo-400 font-bold text-sm border-b border-slate-800 pb-2">
+            <i class="fa-solid fa-clipboard-user"></i> 1. Valoración Clínica & Enunciado NANDA
           </div>
-
-          <div class="p-5 bg-slate-950 rounded-2xl border border-slate-800 text-center space-y-3">
-            <div id="rec-status" class="text-xs uppercase font-bold text-slate-400">Listo para grabar</div>
-            <div id="rec-timer" class="text-3xl font-mono font-black text-slate-200">00:00</div>
-            <button id="btn-record" onclick="toggleAudioRecording()" class="w-14 h-14 mx-auto rounded-full bg-rose-600 hover:bg-rose-500 text-white text-lg flex items-center justify-center shadow-lg shadow-rose-600/30 transition transform active:scale-95">
-              <i class="fa-solid fa-microphone" id="icon-record"></i>
-            </button>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">Datos Subjetivos & Objetivos Relevantes:</label>
+            <textarea id="pae-assessment" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Ej. Paciente refiere dolor en hemitórax 8/10, taquipnea (FR 26 rpm), SatO2 89%, diaforesis..."></textarea>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">Diagnóstico de Enfermería (NANDA):</label>
+            <textarea id="pae-nanda" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-rose-500" placeholder="Ej. [00032] Patrón respiratorio ineficaz relacionado con fatiga muscular evidenciado por disnea y taquipnea."></textarea>
           </div>
         </div>
 
-        <div class="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-            <h3 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-headphones-simple text-rose-400"></i> Audios Guardados</h3>
-            <span id="audio-count" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-medium">0 audios</span>
+        <!-- 2. Resultados NOC & Intervenciones NIC -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm border-b border-slate-800 pb-2">
+            <i class="fa-solid fa-bullseye"></i> 2. Criterios de Resultado (NOC) & Actividades (NIC)
           </div>
-          <div id="audio-list" class="space-y-3 max-h-[460px] overflow-y-auto pr-1"></div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">Resultados Esperados (NOC):</label>
+            <textarea id="pae-noc" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500" placeholder="Ej. [0415] Estado respiratorio: FR en rango normal (16-20 rpm), SatO2 > 92% a los 30 min."></textarea>
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">Intervenciones & Cuidados (NIC):</label>
+            <textarea id="pae-nic" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-cyan-500" placeholder="Ej. [3350] Monitorización respiratoria; [3320] Oxigenoterapia; Posición semifowler a 45°."></textarea>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ==================== 3. FLASHCARDS ==================== -->
+    <!-- ==================== 5. CALCULADORA CLÍNICA & DOSIFICACIÓN FARMACOLÓGICA ==================== -->
+    <section id="view-calc" class="hidden space-y-6">
+      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-calculator text-cyan-400"></i> Calculadora de Infusión, Goteo & Dosificación Farmacológica
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400">
+            Fórmulas exactas para bombas de infusión (ml/h), macrogotero (20 gtt/ml), microgotero (60 gtt/ml) y regla de tres de dilución.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Calculadora de Goteo -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <h3 class="text-sm font-bold text-cyan-300 flex items-center gap-2 border-b border-slate-800 pb-2">
+            <i class="fa-solid fa-droplet"></i> Cálculo de Goteo e Infusión
+          </h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="text-slate-400 block mb-1">Volumen Total (ml):</label>
+              <input type="number" id="calc-volume" value="500" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="text-slate-400 block mb-1">Tiempo de Infusión (Horas):</label>
+              <input type="number" id="calc-time" value="8" step="0.5" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500">
+            </div>
+            <button onclick="calculateDripRate()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 rounded-xl transition shadow-lg shadow-cyan-600/30">
+              Calcular Velocidad
+            </button>
+            <div id="calc-drip-result" class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1 text-slate-300">
+              <div class="flex justify-between"><span>Bomba (ml/h):</span><strong class="text-cyan-400 font-mono text-sm" id="res-ml-h">62.5 ml/h</strong></div>
+              <div class="flex justify-between"><span>Macrogotero (gtt/min):</span><strong class="text-emerald-400 font-mono text-sm" id="res-macro">21 gtt/min</strong></div>
+              <div class="flex justify-between"><span>Microgotero (microgtt/min):</span><strong class="text-indigo-400 font-mono text-sm" id="res-micro">63 ugtt/min</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Regla de Tres de Dilución -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2 border-b border-slate-800 pb-2">
+            <i class="fa-solid fa-vial"></i> Dilución y Dosis Requerida
+          </h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="text-slate-400 block mb-1">Dosis Prescrita (mg):</label>
+              <input type="number" id="calc-prescribed-mg" value="250" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-slate-400 block mb-1">Presentación (mg):</label>
+                <input type="number" id="calc-stock-mg" value="1000" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">Diluyente (ml):</label>
+                <input type="number" id="calc-stock-ml" value="10" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500">
+              </div>
+            </div>
+            <button onclick="calculateDose()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl transition shadow-lg shadow-amber-600/30">
+              Calcular Volumen a Administrar
+            </button>
+            <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex justify-between items-center text-slate-300">
+              <span>Volumen a Inyectar:</span>
+              <strong class="text-amber-400 font-mono text-base" id="res-dose-ml">2.5 ml</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checklist de los 10 Correctos -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-3">
+          <h3 class="text-sm font-bold text-emerald-300 flex items-center gap-2 border-b border-slate-800 pb-2">
+            <i class="fa-solid fa-list-check"></i> 10 Correctos en Medicación
+          </h3>
+          <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 1. Paciente</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 2. Medicamento</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 3. Dosis</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 4. Vía</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 5. Hora</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 6. Registro</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 7. Educar</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 8. Acción</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 9. Resp. clínica</label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" class="accent-emerald-500"> 10. Caducidad</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 6. MAPAS CONCEPTUALES & NORMAS VANCOUVER ==================== -->
+    <section id="view-diagrams" class="hidden space-y-6">
+      <div class="grid lg:grid-cols-2 gap-6">
+        <!-- Mapas Conceptuales Dinámicos (Mermaid) -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-diagram-project text-emerald-400"></i> Generador de Mapas Conceptuales
+            </h3>
+            <button onclick="generateAIMap()" class="text-xs text-indigo-400 font-bold hover:underline flex items-center gap-1">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Crear con IA
+            </button>
+          </div>
+          <div id="mermaid-container" class="p-4 bg-slate-950 rounded-xl border border-slate-800 min-h-[220px] flex items-center justify-center overflow-x-auto">
+            <div class="mermaid">
+graph TD
+  A[Área 4 Brodmann / Corteza Motora] -->|Brazo posterior| B[Cápsula Interna]
+  B --> C[Pedúnculos Mesencefálicos]
+  C --> D[Pirámides Bulbares]
+  D -->|Decusación 85-90%| E[Haz Corticoespinal Lateral]
+  D -->|Sin cruce 10-15%| F[Haz Corticoespinal Anterior]
+  E --> G[Motoneurona Alfa Médula Espinal]
+  G --> H[Contracción Músculo Esquelético]
+            </div>
+          </div>
+        </div>
+
+        <!-- Formateador de Citas Vancouver -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-quote-right text-indigo-400"></i> Formateador Normas Vancouver
+            </h3>
+          </div>
+          <div class="space-y-2 text-xs">
+            <input type="text" id="vancouver-author" placeholder="Autor(es) (Ej. Guyton AC, Hall JE)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            <input type="text" id="vancouver-title" placeholder="Título del capítulo / artículo" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" id="vancouver-source" placeholder="Libro / Revista (Ej. Tratado de Fisiología)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+              <input type="text" id="vancouver-year" placeholder="Año y Páginas (Ej. 2021; p. 115-120)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            </div>
+            <button onclick="formatVancouver()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl transition">
+              Generar Cita Vancouver
+            </button>
+            <div id="vancouver-output" class="p-3 bg-slate-950 rounded-xl border border-slate-800 font-mono text-slate-300 select-all">
+              Guyton AC, Hall JE. Tratado de Fisiología Médica. 14a ed. Barcelona: Elsevier; 2021. p. 115-120.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 7. FLASHCARDS ==================== -->
     <section id="view-flashcards" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4">
         <div>
           <h2 class="text-2xl font-bold text-white">Tarjetas de Memoria</h2>
           <p class="text-sm text-slate-400">Recuperación activa y repaso espaciado.</p>
         </div>
-        <button onclick="toggleCardModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow-lg shadow-indigo-600/30">
-          <i class="fa-solid fa-plus"></i> Crear Flashcard
+        <button onclick="toggleCardModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+          <i class="fa-solid fa-plus"></i> Crear Manual
         </button>
       </div>
 
@@ -352,7 +581,7 @@
       </div>
     </section>
 
-    <!-- ==================== 4. POMODORO ==================== -->
+    <!-- ==================== 8. POMODORO ==================== -->
     <section id="view-timer" class="hidden space-y-6">
       <div class="grid md:grid-cols-3 gap-6">
         <div class="md:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center shadow-xl">
@@ -375,51 +604,19 @@
       </div>
     </section>
 
-    <!-- ==================== 5. TAREAS ==================== -->
-    <section id="view-tasks" class="hidden space-y-6">
-      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-plus-circle text-indigo-400"></i> Nueva Tarea</h2>
-        <form id="task-form" onsubmit="handleAddTask(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div class="md:col-span-2">
-            <input type="text" id="task-title" placeholder="¿Qué tema vas a preparar?" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 text-sm">
-          </div>
-          <div>
-            <select id="task-subject" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-indigo-500 text-sm">
-              <option value="Miología">Miología / Músculos</option>
-              <option value="Neuroanatomía">Neuroanatomía</option>
-              <option value="Farmacología">Farmacología</option>
-              <option value="General">General</option>
-            </select>
-          </div>
-          <div>
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30"><i class="fa-solid fa-plus"></i> Agregar</button>
-          </div>
-        </form>
-      </div>
-      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-list-check text-indigo-400"></i> Plan de Estudio</h2>
-          <span id="task-count" class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-medium">0 tareas</span>
-        </div>
-        <div id="tasks-list" class="space-y-3"></div>
-      </div>
-    </section>
-
   </main>
 
-  <!-- ==================== MODALES ==================== -->
-
-  <!-- Modal Autenticación / Cuenta Supabase -->
+  <!-- Modal Cuenta & Clave Gemini IA -->
   <div id="auth-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
       <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-cloud text-emerald-400"></i> Sincronización en la Nube</h3>
+        <h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-user-gear text-indigo-400"></i> Cuenta & Clave de Inteligencia Artificial</h3>
         <button onclick="toggleAuthModal(false)" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <div id="auth-form-container" class="space-y-4">
         <p class="text-xs text-slate-400 leading-relaxed">
-          Inicia sesión o regístrate para que tus flashcards, audios y tareas se sincronicen entre todos tus dispositivos.
+          Inicia sesión para sincronizar tus casos, flashcards y tu clave de IA entre tus dispositivos.
         </p>
         <form onsubmit="handleAuthSubmit(event)" class="space-y-3">
           <div>
@@ -437,86 +634,34 @@
         </form>
       </div>
 
-      <div id="auth-user-connected" class="hidden space-y-4 text-center py-3">
-        <div class="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto text-xl border border-emerald-500/30">
-          <i class="fa-solid fa-check"></i>
+      <div id="auth-user-connected" class="hidden space-y-4 pt-1">
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Sincronizado</span>
+            <p id="connected-user-email" class="text-xs font-semibold text-white truncate max-w-[200px]">usuario@ejemplo.com</p>
+          </div>
+          <button onclick="handleSignOut()" class="text-xs text-rose-400 hover:underline">Cerrar Sesión</button>
         </div>
-        <div>
-          <h4 class="text-sm font-bold text-white">Conectado a la Nube</h4>
-          <p id="connected-user-email" class="text-xs text-slate-400 mt-1">usuario@ejemplo.com</p>
-        </div>
-        <button onclick="handleSignOut()" class="w-full bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/40 font-semibold py-2 rounded-xl text-xs transition">
-          Cerrar Sesión
-        </button>
-      </div>
-    </div>
-  </div>
 
-  <!-- Modal Flashcard -->
-  <div id="card-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-white">Nueva Flashcard</h3>
-        <button onclick="toggleCardModal(false)" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <div class="space-y-2 p-3 bg-indigo-950/20 border border-indigo-900/40 rounded-xl">
+          <label class="text-xs font-bold text-indigo-300 flex items-center justify-between">
+            <span><i class="fa-solid fa-key text-amber-400"></i> Tu API Key de Google Gemini:</span>
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-indigo-400 hover:underline">Obtener gratis &rarr;</a>
+          </label>
+          <input type="password" id="user-gemini-key" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 font-mono">
+          <button onclick="saveUserGeminiKey()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl text-xs transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar Clave con este Usuario
+          </button>
+        </div>
       </div>
-      <form onsubmit="handleCreateCard(event)" class="space-y-4">
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Materia o Tema</label>
-          <input type="text" id="fc-tag" required placeholder="Ej. Miología, Neuroanatomía..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Frente (Pregunta / Término)</label>
-          <textarea id="fc-front" required rows="2" placeholder="Ej. ¿Qué músculos conforman el manguito rotador?" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></textarea>
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Reverso (Respuesta / Explicación)</label>
-          <textarea id="fc-back" required rows="3" placeholder="Ej. Supraespinoso, Infraespinoso, Redondo menor y Subescapular (SIRS)." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></textarea>
-        </div>
-        <div class="flex justify-end gap-3 pt-2">
-          <button type="button" onclick="toggleCardModal(false)" class="px-4 py-2 text-sm text-slate-400 hover:text-white">Cancelar</button>
-          <button type="submit" class="px-5 py-2 text-sm bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold shadow-lg shadow-indigo-600/30">Guardar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal Caso Clínico -->
-  <div id="case-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-white">Nuevo Caso Clínico</h3>
-        <button onclick="toggleCaseModal(false)" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      <form onsubmit="handleCreateCase(event)" class="space-y-4">
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Categoría</label>
-          <input type="text" id="new-case-cat" required placeholder="Ej. Miología / Inervación" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Viñeta Clínica</label>
-          <textarea id="new-case-vignette" required rows="3" placeholder="Historia del paciente..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></textarea>
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Pregunta Oral</label>
-          <input type="text" id="new-case-q" required placeholder="¿Qué nervio está comprometido?" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
-        </div>
-        <div>
-          <label class="text-xs font-medium text-slate-300 block mb-1">Rúbrica de Respuesta</label>
-          <textarea id="new-case-ans" required rows="3" placeholder="Respuesta y justificación anatómica..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"></textarea>
-        </div>
-        <div class="flex justify-end gap-3 pt-2">
-          <button type="button" onclick="toggleCaseModal(false)" class="px-4 py-2 text-sm text-slate-400 hover:text-white">Cancelar</button>
-          <button type="submit" class="px-5 py-2 text-sm bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold">Guardar</button>
-        </div>
-      </form>
     </div>
   </div>
 
   <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800/80">
-    StudyHub Pro &bull; Atlas 3D por Capas, Inervación y Sincronización en la Nube.
+    StudyHub Pro &bull; Suite Clínica y Académica Integral &bull; Notebook IA, PAE, Dosificación & Atlas 3D.
   </footer>
 
-  <!-- SCRIPT INTEGRADO: BASE DE DATOS DE CAPAS ANATÓMICAS 3D -->
+  <!-- SCRIPT INTEGRADO: SUITE CLÍNICA COMPLETA -->
   <script>
     const SUPABASE_URL = 'https://ohwxgmtxaagkeerudfnm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9od3hnbXR4YWFna2VlcnVkZm5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0NDM2MjksImV4cCI6MjEwMzAxOTYyOX0.-t0_lOh8VtR24ww7pCL0Cwvj4IIR529AnrPHsSX1jRk';
@@ -524,123 +669,393 @@
     let supabaseClient = null;
     let currentUser = null;
     let authActionType = 'login';
+    let userGeminiApiKey = localStorage.getItem('study_gemini_key') || '';
+
+    let loadedPdfBase64 = null;
+    let loadedPdfMimeType = null;
+    let loadedPdfFileName = '';
+
+    // Reconocimiento de voz (Speech-to-Text)
+    let recognition = null;
+    let isSpeechActive = false;
 
     try {
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch (e) {
-      console.log('Error inicializando Supabase.');
+    } catch (e) {}
+
+    // Inicializar SpeechRecognition si está soportado
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRec();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'es-CO';
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        document.getElementById('oral-transcript-text').textContent = transcript;
+      };
     }
 
-    // --- BASE DE DATOS ESTRUCTURADA DE CAPAS Y ANATOMÍA DESCRIPTIVA ---
+    function toggleOralTimerWithVoice() {
+      toggleOralTimer();
+      if (!recognition) return;
+
+      if (isOralRunning) {
+        try {
+          recognition.start();
+          isSpeechActive = true;
+          document.getElementById('oral-stt-status').textContent = 'Escuchando tu voz...';
+          document.getElementById('oral-stt-status').className = 'text-[10px] text-emerald-400 font-bold uppercase';
+        } catch (err) {}
+      } else {
+        recognition.stop();
+        isSpeechActive = false;
+        document.getElementById('oral-stt-status').textContent = 'Grabación pausada';
+      }
+    }
+
+    async function evaluateOralResponseWithAI() {
+      const transcript = document.getElementById('oral-transcript-text').textContent;
+      const c = clinicalCases[currentCaseIndex];
+
+      if (!transcript || transcript.includes('Presiona "Iniciar Respuesta')) {
+        alert('Por favor responde primero oralmente usando el micrófono.');
+        return;
+      }
+
+      const prompt = `Actúa como docente evaluador en un examen oral de medicina.
+Pregunta: "${c.question}"
+Respuesta modelo esperada: "${c.answer}"
+Puntos clave: "${c.keyPoints}"
+Transcripción de lo que dijo el estudiante: "${transcript}"
+
+Evalúa en máximo 4 párrafos concisos:
+1. Puntos anatómicos/clínicos explicados correctamente.
+2. Conceptos o estructuras clave omitidos.
+3. Calificación estimativa (1 a 5) y consejo técnico de mejora.`;
+
+      const fbBox = document.getElementById('oral-ai-feedback');
+      const fbContent = document.getElementById('oral-feedback-content');
+      fbBox.classList.remove('hidden');
+      fbContent.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Evaluando respuesta oral con IA...';
+
+      try {
+        const res = await callGeminiWithPDF(prompt);
+        fbContent.textContent = res;
+      } catch (err) {
+        fbContent.textContent = 'Error evaluando: ' + err.message;
+      }
+    }
+
+    // --- CALCULADORAS CLÍNICAS ---
+    function calculateDripRate() {
+      const vol = parseFloat(document.getElementById('calc-volume').value) || 0;
+      const hrs = parseFloat(document.getElementById('calc-time').value) || 1;
+
+      const mlH = (vol / hrs).toFixed(1);
+      const macro = Math.round(vol / (hrs * 3));
+      const micro = Math.round(vol / hrs);
+
+      document.getElementById('res-ml-h').textContent = `${mlH} ml/h`;
+      document.getElementById('res-macro').textContent = `${macro} gtt/min`;
+      document.getElementById('res-micro').textContent = `${micro} ugtt/min`;
+    }
+
+    function calculateDose() {
+      const pres = parseFloat(document.getElementById('calc-prescribed-mg').value) || 0;
+      const stockMg = parseFloat(document.getElementById('calc-stock-mg').value) || 1;
+      const stockMl = parseFloat(document.getElementById('calc-stock-ml').value) || 1;
+
+      const res = ((pres * stockMl) / stockMg).toFixed(2);
+      document.getElementById('res-dose-ml').textContent = `${res} ml`;
+    }
+
+    // --- FORMATO VANCOUVER ---
+    function formatVancouver() {
+      const author = document.getElementById('vancouver-author').value.trim() || 'Guyton AC, Hall JE';
+      const title = document.getElementById('vancouver-title').value.trim() || 'Tratado de Fisiología Médica';
+      const source = document.getElementById('vancouver-source').value.trim() || 'Elsevier';
+      const year = document.getElementById('vancouver-year').value.trim() || '2021. p. 115-120';
+
+      const formatted = `${author}. ${title}. ${source}; ${year}.`;
+      document.getElementById('vancouver-output').textContent = formatted;
+    }
+
+    // --- PAE CON IA ---
+    async function generateAIPAEPlan() {
+      const vignette = document.getElementById('case-vignette').textContent;
+      const prompt = `A partir de esta viñeta clínica: "${vignette}", formula un plan de Proceso de Atención de Enfermería (PAE) estructurado en formato JSON:
+{
+  "assessment": "Datos subjetivos y objetivos...",
+  "nanda": "[Código] Diagnóstico NANDA relacionado con... evidenciado por...",
+  "noc": "[Código] Criterio NOC con indicador medible...",
+  "nic": "[Código] Intervenciones NIC y fundamentación científica..."
+}`;
+      const btn = document.getElementById('btn-gen-pae');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PAE...';
+
+      try {
+        let text = await callGeminiWithPDF(prompt);
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const data = JSON.parse(text);
+
+        document.getElementById('pae-assessment').value = data.assessment || '';
+        document.getElementById('pae-nanda').value = data.nanda || '';
+        document.getElementById('pae-noc').value = data.noc || '';
+        document.getElementById('pae-nic').value = data.nic || '';
+        switchTab('pae');
+      } catch (err) {
+        alert('Error generando PAE: ' + err.message);
+      } finally {
+        btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generar PAE Completo con IA';
+      }
+    }
+
+    // --- AUDIO REPASO MANOS LIBRES (TEXT-TO-SPEECH) ---
+    let isAudioStudyActive = false;
+    function toggleAudioStudyMode() {
+      if (!('speechSynthesis' in window)) {
+        alert('Síntesis de voz no disponible en este navegador.');
+        return;
+      }
+
+      isAudioStudyActive = !isAudioStudyActive;
+      const btn = document.getElementById('btn-audio-mode');
+
+      if (isAudioStudyActive) {
+        btn.className = 'px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 animate-pulse';
+        playCurrentCardAudio();
+      } else {
+        btn.className = 'px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5';
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function playCurrentCardAudio() {
+      if (!isAudioStudyActive || flashcards.length === 0) return;
+      const card = flashcards[currentCardIndex];
+
+      const utterFront = new SpeechSynthesisUtterance("Pregunta: " + card.front);
+      utterFront.lang = 'es-CO';
+      utterFront.rate = 0.95;
+
+      utterFront.onend = () => {
+        setTimeout(() => {
+          if (!isAudioStudyActive) return;
+          const utterBack = new SpeechSynthesisUtterance("Respuesta: " + card.back);
+          utterBack.lang = 'es-CO';
+          utterBack.rate = 0.95;
+          utterBack.onend = () => {
+            setTimeout(() => {
+              if (!isAudioStudyActive) return;
+              currentCardIndex = (currentCardIndex + 1) % flashcards.length;
+              renderFlashcards();
+              playCurrentCardAudio();
+            }, 3000);
+          };
+          window.speechSynthesis.speak(utterBack);
+        }, 3000);
+      };
+
+      window.speechSynthesis.speak(utterFront);
+    }
+
+    // --- CARGA DE PDF & NOTEBOOK IA ---
+    function handlePDFUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      loadedPdfFileName = file.name;
+      loadedPdfMimeType = file.type || 'application/pdf';
+
+      document.getElementById('pdf-file-name').textContent = file.name;
+      document.getElementById('pdf-status-badge').textContent = `Activo: ${file.name.substring(0, 20)}...`;
+      document.getElementById('pdf-status-badge').className = 'text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded-full';
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const fullResult = evt.target.result;
+        loadedPdfBase64 = fullResult.split(',')[1];
+        appendChatMessage('system', `📄 Documento <strong>${file.name}</strong> cargado con éxito. Ahora puedes generar casos, flashcards o consultar directamente.`);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function appendChatMessage(sender, htmlContent) {
+      const box = document.getElementById('pdf-chat-box');
+      const msgDiv = document.createElement('div');
+
+      if (sender === 'user') {
+        msgDiv.className = 'p-3 bg-indigo-950/40 border border-indigo-900/50 rounded-xl text-white ml-8 text-right space-y-1';
+        msgDiv.innerHTML = `<span class="text-[10px] uppercase font-bold text-indigo-300 block">Tú</span><div>${htmlContent}</div>`;
+      } else if (sender === 'ai') {
+        msgDiv.className = 'p-3.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 mr-4 space-y-1.5 shadow';
+        msgDiv.innerHTML = `<span class="text-[10px] uppercase font-bold text-amber-400 flex items-center gap-1"><i class="fa-solid fa-wand-magic-sparkles"></i> Notebook IA</span><div class="leading-relaxed whitespace-pre-wrap">${htmlContent}</div>`;
+      } else {
+        msgDiv.className = 'p-3 bg-slate-900/60 border border-slate-800 rounded-xl text-slate-300 text-xs text-center';
+        msgDiv.innerHTML = htmlContent;
+      }
+
+      box.appendChild(msgDiv);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function callGeminiWithPDF(promptText) {
+      if (!userGeminiApiKey) {
+        alert('Por favor vincula tu API Key de Google Gemini en el botón "Mi Cuenta & IA" arriba a la derecha.');
+        toggleAuthModal(true);
+        return null;
+      }
+
+      const parts = [{ text: promptText }];
+      if (loadedPdfBase64) {
+        parts.push({
+          inline_data: {
+            mime_type: loadedPdfMimeType,
+            data: loadedPdfBase64
+          }
+        });
+      }
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${userGeminiApiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts }] })
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      return data.candidates[0].content.parts[0].text;
+    }
+
+    async function askPDFAction(action) {
+      if (!loadedPdfBase64) {
+        alert('Por favor selecciona primero un archivo PDF tocando la zona de carga.');
+        return;
+      }
+
+      if (action === 'cases') {
+        appendChatMessage('user', 'Genera 2 casos clínicos de examen oral del PDF.');
+        appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Analizando el documento...');
+        
+        const prompt = `Genera exactamente 2 casos clínicos de examen oral basados en el documento adjunto. Formato JSON:
+[{"category":"Tema","vignette":"Historia...","question":"Pregunta...","answer":"Respuesta...","keyPoints":"Puntos"}]`;
+        try {
+          let text = await callGeminiWithPDF(prompt);
+          text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const newCases = JSON.parse(text);
+
+          newCases.forEach(c => clinicalCases.unshift({ id: Date.now() + Math.random(), ...c }));
+          saveData('cases');
+          appendChatMessage('ai', `✅ Se generaron **${newCases.length} Casos Clínicos** y se agregaron a la pestaña "Simulador Oral".`);
+        } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+
+      } else if (action === 'flashcards') {
+        appendChatMessage('user', 'Crea 4 Flashcards de alto rendimiento de este PDF.');
+        appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Extrayendo flashcards...');
+
+        const prompt = `Crea 4 flashcards basadas en el documento adjunto. Formato JSON:
+[{"tag":"Tema","front":"¿Pregunta?","back":"Respuesta"}]`;
+        try {
+          let text = await callGeminiWithPDF(prompt);
+          text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const newCards = JSON.parse(text);
+
+          newCards.forEach(c => flashcards.push({ id: Date.now() + Math.random(), ...c }));
+          saveData('flashcards');
+          appendChatMessage('ai', `✅ Se generaron **${newCards.length} Flashcards** en tu mazo de repaso.`);
+        } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+
+      } else if (action === 'pae') {
+        generateAIPAEPlan();
+      } else if (action === 'summary') {
+        appendChatMessage('user', 'Dame una síntesis estructurada para responder en examen oral sobre este documento.');
+        appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Sintetizando...');
+        try {
+          const text = await callGeminiWithPDF('Devuelve una síntesis estructurada con los 5 puntos cardinales del PDF para examen oral.');
+          appendChatMessage('ai', text);
+        } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+      }
+    }
+
+    async function handlePDFUserQuery(e) {
+      e.preventDefault();
+      const input = document.getElementById('pdf-user-prompt');
+      const query = input.value.trim();
+      if (!query) return;
+
+      appendChatMessage('user', query);
+      input.value = '';
+      appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Consultando...');
+
+      try {
+        const text = await callGeminiWithPDF(query);
+        appendChatMessage('ai', text);
+      } catch (err) {
+        appendChatMessage('ai', 'Error: ' + err.message);
+      }
+    }
+
+    // --- BASE DE DATOS DE CAPAS ANATÓMICAS 3D ---
     const anatomyLayersData = {
       muscles_full: {
         badge: "Plano Muscular (Miología)",
         badgeColor: "text-rose-400 bg-rose-950/80 border-rose-800",
         btnActiveColor: "bg-rose-600 text-white",
         title: "Músculos Superficiales y Profundos",
-        desc: "Disección tridimensional de los grupos musculares axiales y apendiculares con inserciones, inervación periférica y función.",
+        desc: "Disección tridimensional de los grupos musculares con inserciones, inervación periférica y función.",
         embedUrl: "https://sketchfab.com/models/75cc6aa94b5c4ed88f9810770d614ac1/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
         structures: [
           {
             id: "rotator_cuff",
             name: "Manguito Rotador (SIRS)",
             type: "Músculos del Hombro",
-            origin_insertion: "Fosa supraespinosa, infraespinosa, borde lateral escapular y fosa subescapular -> Troquíter y Troquín del húmero.",
-            innervation: "Nervio Supraescapular (C5-C6), Axilar/Circunflejo (C5-C6) y Subescapular.",
-            action: "Abducción inicial (0-15° supraespinoso), rotación externa (infraespinoso/redondo menor) y rotación interna (subescapular).",
-            clinical_pearl: "Signo de Neer y Hawkins positivo en tendinitis del supraespinoso; debilidad en la abducción contra resistencia."
-          },
-          {
-            id: "deltoid",
-            name: "Músculo Deltoides",
-            type: "Hombro",
-            origin_insertion: "Tercio lateral de clavícula, acromion y espina de la escápula -> Tuberosidad deltoidea del húmero.",
-            innervation: "Nervio Axilar / Circunflejo (C5-C6).",
-            action: "Principal abductor del brazo (15° a 90°), flexor anterior y extensor posterior.",
-            clinical_pearl: "En luxación anterior de hombro o fractura de cuello quirúrgico de húmero se lesiona el nervio axilar con atrofia deltoidea."
-          },
-          {
-            id: "quadriceps",
-            name: "Cuádriceps Femoral",
-            type: "Muslo Anterior",
-            origin_insertion: "Recto femoral (EIAI), vasto lateral, vasto medial y vasto intermedio -> Tendón rotuliano en tuberosidad tibial.",
-            innervation: "Nervio Femoral / Crural (L2-L4).",
-            action: "Principal extensor de la rodilla y flexor secundario de la cadera (recto femoral).",
-            clinical_pearl: "Exploración del reflejo rotuliano (L3-L4): su abolición orienta a radiculopatía o lesión del nervio femoral."
-          },
-          {
-            id: "facial_mimic",
-            name: "Músculos de la Mímica Facial",
-            type: "Cabeza y Cuello",
-            origin_insertion: "Huesos del cráneo -> Piel y dermis facial.",
-            innervation: "Nervio Facial (VII Par Craneal).",
-            action: "Expresión facial, oclusión palpebral (orbicular de los ojos) y bucal (orbicular de los labios).",
-            clinical_pearl: "Parálisis de Bell (periférica): imposibilidad de fruncir la frente y cerrar el ojo homolateral. Parálisis central: respeta la frente."
+            origin_insertion: "Fosa supraespinosa, infraespinosa, borde lateral escapular y fosa subescapular -> Húmero.",
+            innervation: "N. Supraescapular, Axilar y Subescapular.",
+            action: "Abducción inicial (0-15°), rotación externa e interna.",
+            clinical_pearl: "Signo de Neer y Hawkins positivo en tendinitis del supraespinoso."
           }
         ]
       },
       neuro_brain: {
-        badge: "Sistema Nervioso Central & Periférico",
+        badge: "Sistema Nervioso Central",
         badgeColor: "text-indigo-400 bg-indigo-950/80 border-indigo-800",
         btnActiveColor: "bg-indigo-600 text-white",
-        title: "Encéfalo, Tronco Encefálico y Pares Craneales",
-        desc: "Centros superiores de integración motora, sensitiva, refleja y vías de proyección descendentes/ascendentes.",
+        title: "Encéfalo y Pares Craneales",
+        desc: "Centros superiores de integración motora, sensitiva y vías descendentes.",
         embedUrl: "https://sketchfab.com/models/4d8f89b9e6734005ba3cbff56e30b805/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
         structures: [
           {
             id: "motor_cortex",
-            name: "Corteza Motora Primaria (Área 4 de Brodmann)",
+            name: "Corteza Motora Primaria (Área 4 Brodmann)",
             type: "Telencéfalo",
             origin_insertion: "Giro precentral del lóbulo frontal.",
-            innervation: "Irrigado por Arteria Cerebral Media (cara lateral/brazo/cara) y Cerebral Anterior (pierna).",
-            action: "Origen somatotópico del Homúnculo Motor de Penfield y de la vía corticoespinal.",
-            clinical_pearl: "ACV de cerebral media causa hemiplejía faciobraquial contralateral; ACV de cerebral anterior afecta la extremidad inferior."
-          },
-          {
-            id: "brainstem_pyramid",
-            name: "Tronco Encefálico & Decusación Piramidal",
-            type: "Bulbo Raquídeo",
-            origin_insertion: "Unión bulbo-medular inferior.",
-            innervation: "Vía Corticoespinal descendente.",
-            action: "Cruce del 85-90% de las fibras motoras al cordón lateral opuesto de la médula espinal.",
-            clinical_pearl: "Lesiones por encima de la decusación (ej. cápsula interna) producen parálisis contralateral; lesiones medulares producen déficit ipsilateral."
-          },
-          {
-            id: "cranial_oculomotor",
-            name: "III Par: Nervio Oculomotor",
-            type: "Par Craneal",
-            origin_insertion: "Fosa interpeduncular del mesencéfalo -> Hendidura esfenoidal.",
-            innervation: "Fibras motoras somáticas + Parasimpáticas de Edinger-Westphal.",
-            action: "Inerva recto sup/med/inf, oblicuo menor, elevador del párpado y constrictor pupilar.",
-            clinical_pearl: "Lesión completa genera ptosis palpebral, midriasis arreactiva y desviación lateral del ojo ('hacia abajo y afuera')."
+            innervation: "Arteria Cerebral Media y Anterior.",
+            action: "Homúnculo Motor de Penfield y vía corticoespinal.",
+            clinical_pearl: "ACV de cerebral media causa hemiplejía faciobraquial contralateral."
           }
         ]
       },
       cardio_visceral: {
-        badge: "Sistema Cardiovascular & Torácico",
+        badge: "Sistema Cardiovascular",
         badgeColor: "text-amber-400 bg-amber-950/80 border-amber-800",
         btnActiveColor: "bg-amber-600 text-white",
-        title: "Corazón, Aparato Valvular y Grandes Vasos",
-        desc: "Hemodinámica cardiovascular, cámaras cardíacas, coronarias y ramas de eyección sistémica.",
+        title: "Corazón & Grandes Vasos",
+        desc: "Hemodinámica cardiovascular y aparato valvular.",
         embedUrl: "https://sketchfab.com/models/f527bf19f8ba499fb4c759535798939c/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
         structures: [
           {
             id: "aortic_arch",
-            name: "Cayado Aórtico y Ramas Principales",
+            name: "Cayado Aórtico",
             type: "Grandes Vasos",
-            origin_insertion: "Salida del ventrículo izquierdo -> Mediastino superior.",
-            innervation: "Inervación barorreceptora por el Nervio Vago (X Par).",
-            action: "Distribución del gasto cardíaco hacia cabeza, cuello y miembros superiores.",
-            clinical_pearl: "Sus 3 ramas cardinales de derecha a izquierda: 1. Tronco braquiocefálico, 2. Carótida común izquierda, 3. Subclavia izquierda."
-          },
-          {
-            id: "left_ventricle",
-            name: "Ventrículo Izquierdo & Válvula Aórtica",
-            type: "Cavidad Cardíaca",
-            origin_insertion: "Pared miocárdica de 10-15 mm de grosor con válvula semilunar aórtica.",
-            innervation: "Sistema de conducción eléctrica (Rama izquierda del Haz de His y fibras de Purkinje).",
-            action: "Generación de la presión sistólica para perfusión de la circulación mayor.",
-            clinical_pearl: "La estenosis aórtica genera sobrecarga de presión concéntrica, soplo mesosistólico eyectivo irradiado a carótidas y síncope."
+            origin_insertion: "Salida del ventrículo izquierdo.",
+            innervation: "Nervio Vago (X Par).",
+            action: "Distribución del gasto cardíaco sistémico.",
+            clinical_pearl: "Ramas: Tronco braquiocefálico, Carótida común izq, Subclavia izq."
           }
         ]
       },
@@ -648,27 +1063,18 @@
         badge: "Sistema Esquelético Axial",
         badgeColor: "text-cyan-400 bg-cyan-950/80 border-cyan-800",
         btnActiveColor: "bg-cyan-600 text-white",
-        title: "Columna Vertebral, Médula y Discos",
-        desc: "Soporte mecánico axial, canal de protección raquídeo y forámenes de emergencia neural.",
+        title: "Columna & Canal Raquídeo",
+        desc: "Soporte mecánico axial y forámenes de emergencia neural.",
         embedUrl: "https://sketchfab.com/models/285d89ce199b4566aa10bbcfb826dc6a/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
         structures: [
           {
             id: "atlas_axis",
             name: "Articulación Atlantoaxoidea (C1-C2)",
             type: "Columna Cervical",
-            origin_insertion: "Atlas (C1) y apófisis odontoides del Axis (C2) sostenida por ligamento transverso.",
-            innervation: "Nervio suboccipital (C1).",
-            action: "Responsable del 50% de la rotación cefálica total del cuello.",
-            clinical_pearl: "En artritis reumatoide o traumatismos graves puede haber ruptura del ligamento transverso con compresión bulbar mortal."
-          },
-          {
-            id: "intervertebral_disc",
-            name: "Discos Intervertebrales & Cono Medular",
-            type: "Raquis Lumbar",
-            origin_insertion: "Anillo fibroso periférico y núcleo pulposo central (L1-S1).",
-            innervation: "Nervio sinuvertebral de Luschka.",
-            action: "Amortiguación hidrostática de cargas axiales y protección del canal raquídeo.",
-            clinical_pearl: "La médula finaliza en L1-L2 (cono medular). Las punciones lumbares se realizan en L3-L4 o L4-L5 para evitar daño neurológico."
+            origin_insertion: "Atlas y Axis con ligamento transverso.",
+            innervation: "N. suboccipital.",
+            action: "50% de la rotación cefálica total.",
+            clinical_pearl: "Ruptura del ligamento transverso causa compresión bulbar mortal."
           }
         ]
       },
@@ -676,27 +1082,18 @@
         badge: "Osteología / Neurocráneo",
         badgeColor: "text-purple-400 bg-purple-950/80 border-purple-800",
         btnActiveColor: "bg-purple-600 text-white",
-        title: "Cráneo, Fosas Craneales y Forámenes de la Base",
-        desc: "Base ósea craneal con forámenes de paso para pares craneales y pedículos vasculares encefálicos.",
+        title: "Cráneo & Forámenes de la Base",
+        desc: "Base ósea craneal y hendiduras de paso neurovascular.",
         embedUrl: "https://sketchfab.com/models/1cb05f1373e34bcf9fbf546a3629fba1/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
         structures: [
           {
             id: "foramen_magnum",
-            name: "Foramen Magno (Hueso Occipital)",
-            type: "Fosa Craneal Posterior",
-            origin_insertion: "Orificio central del hueso occipital.",
-            innervation: "Transición bulbo-medular hacia la médula espinal.",
-            action: "Paso de médula oblongada, arterias vertebrales y raíces espinales del nervio accesorio (XI).",
-            clinical_pearl: "En hipertensión endocraneana severa, las amígdalas cerebelosas se hernian a través del foramen magno comprimiendo el centro cardiorrespiratorio."
-          },
-          {
-            id: "sella_turcica",
-            name: "Silla Turca (Hueso Esfenoides)",
-            type: "Fosa Craneal Media",
-            origin_insertion: "Depresión central en el cuerpo del esfenoides delimitada por las apófisis clinoides.",
-            innervation: "Relación superior con el quiasma óptico y lateral con el seno cavernoso.",
-            action: "Aloja y protege a la glándula hipófisis (pituitaria).",
-            clinical_pearl: "Los adenomas hipofisarios comprimen el quiasma óptico produciendo hemianopsia bitemporal (pérdida de campos visuales temporales)."
+            name: "Foramen Magno",
+            type: "Fosa Posterior",
+            origin_insertion: "Hueso occipital.",
+            innervation: "Transición bulbo-medular.",
+            action: "Paso de bulbo y arterias vertebrales.",
+            clinical_pearl: "Enclavamiento amigdalino en hipertensión endocraneana."
           }
         ]
       }
@@ -709,7 +1106,6 @@
       currentLayerKey = layerKey;
       currentStructureIndex = 0;
 
-      // Actualizar botones de capa
       document.querySelectorAll('[id^="btn-layer-"]').forEach(btn => {
         btn.className = 'px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5';
       });
@@ -717,11 +1113,9 @@
       const layerData = anatomyLayersData[layerKey];
       document.getElementById(`btn-layer-${layerKey}`).className = `px-3 py-1.5 rounded-xl font-bold ${layerData.btnActiveColor} transition shadow flex items-center gap-1.5`;
 
-      // Cargar iframe 3D
       const iframe = document.getElementById('anatomy-iframe-viewer');
       if (iframe) iframe.src = layerData.embedUrl;
 
-      // Actualizar encabezados
       document.getElementById('layer-badge').textContent = layerData.badge;
       document.getElementById('layer-badge').className = `text-xs font-bold uppercase tracking-wider ${layerData.badgeColor} px-3 py-1 rounded-full border`;
       document.getElementById('layer-title').textContent = layerData.title;
@@ -757,12 +1151,12 @@
           <span class="text-[10px] font-bold uppercase text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-900">${st.type}</span>
           <h4 class="text-sm font-bold text-white mt-1">${st.name}</h4>
         </div>
-        <div class="space-y-1.5 text-slate-300">
-          <p><strong><i class="fa-solid fa-arrows-split-up-and-left text-indigo-400"></i> Origen / Inserción:</strong> ${st.origin_insertion}</p>
-          <p><strong><i class="fa-solid fa-bolt text-amber-400"></i> Inervación / Relación:</strong> ${st.innervation}</p>
-          <p><strong><i class="fa-solid fa-gear text-emerald-400"></i> Acción / Función:</strong> ${st.action}</p>
+        <div class="space-y-1 text-slate-300">
+          <p><strong>Origen/Inserción:</strong> ${st.origin_insertion}</p>
+          <p><strong>Inervación:</strong> ${st.innervation}</p>
+          <p><strong>Acción:</strong> ${st.action}</p>
           <div class="mt-2 p-2 bg-rose-950/30 border border-rose-900/40 rounded-lg text-rose-200">
-            <strong class="text-rose-400 block mb-0.5"><i class="fa-solid fa-stethoscope"></i> Correlación Clínica & Examen Oral:</strong>
+            <strong class="text-rose-400 block mb-0.5">Correlación Clínica:</strong>
             ${st.clinical_pearl}
           </div>
         </div>
@@ -784,7 +1178,9 @@
         id: Date.now(),
         tag: st.type,
         front: `¿Cuál es la inervación, acción y relevancia clínica de ${st.name}?`,
-        back: `• Inervación: ${st.innervation}\n• Acción: ${st.action}\n• Clínica: ${st.clinical_pearl}`
+        back: `• Inervación: ${st.innervation}
+• Acción: ${st.action}
+• Clínica: ${st.clinical_pearl}`
       });
       saveData('flashcards');
       switchTab('flashcards');
@@ -793,14 +1189,8 @@
     }
 
     // --- GESTIÓN DE DATOS & SUPABASE ---
-    let tasks = JSON.parse(localStorage.getItem('study_tasks')) || [
-      { id: 1, title: 'Repasar músculos del manguito rotador y su inervación', subject: 'Miología', done: false },
-      { id: 2, title: 'Simulación oral: decusación piramidal y pares craneales', subject: 'Neuroanatomía', done: false }
-    ];
-
     let flashcards = JSON.parse(localStorage.getItem('study_cards')) || [
-      { id: 1, tag: 'Miología', front: '¿Cuáles son los 4 músculos del manguito rotador y su regla mnemotécnica?', back: 'Regla SIRS: Supraespinoso, Infraespinoso, Redondo menor y Subescapular.' },
-      { id: 2, tag: 'Neuroanatomía', front: '¿Cuál es el área motora primaria de Brodmann?', back: 'El Área 4 de Brodmann (Giro precentral).' }
+      { id: 1, tag: 'Miología', front: '¿Cuáles son los 4 músculos del manguito rotador y su regla mnemotécnica?', back: 'Regla SIRS: Supraespinoso, Infraespinoso, Redondo menor y Subescapular.' }
     ];
 
     let clinicalCases = JSON.parse(localStorage.getItem('study_clinical_cases')) || [
@@ -811,39 +1201,25 @@
         question: "¿Qué par craneal está lesionado y cuáles componentes funcionales están comprometidos?",
         answer: "Lesión completa del III Par Craneal (Nervio Oculomotor). Compromete fibras somatomotoras y fibras parasimpáticas pupilares del núcleo de Edinger-Westphal.",
         keyPoints: "III Par, Núcleo de Edinger-Westphal, Midriasis arreactiva, Ptosis palpebral."
-      },
-      {
-        id: 2,
-        category: "Miología / Inervación Periférica",
-        vignette: "Paciente de 24 años con fractura diafisaria de húmero presenta incapacidad para extender la muñeca ('mano caída').",
-        question: "¿Qué nervio periférico está lesionado y qué compartimento muscular está paralizado?",
-        answer: "Lesión del Nervio Radial en el canal de torsión humeral. Parálisis de los músculos extensores del antebrazo.",
-        keyPoints: "Nervio Radial, Mano caída, Extensores del carpo y dedos."
       }
     ];
 
-    let savedAudios = JSON.parse(localStorage.getItem('study_audio_notes')) || [];
     let studyStats = JSON.parse(localStorage.getItem('study_stats')) || { sessions: 0, minutes: 0 };
 
     async function saveData(type) {
-      if (type === 'tasks') localStorage.setItem('study_tasks', JSON.stringify(tasks));
       if (type === 'flashcards') localStorage.setItem('study_cards', JSON.stringify(flashcards));
       if (type === 'cases') localStorage.setItem('study_clinical_cases', JSON.stringify(clinicalCases));
-      if (type === 'audio') localStorage.setItem('study_audio_notes', JSON.stringify(savedAudios));
       if (type === 'stats') localStorage.setItem('study_stats', JSON.stringify(studyStats));
 
       if (supabaseClient && currentUser) {
         try {
-          if (type === 'tasks') await supabaseClient.from('tasks').upsert(tasks.map(t => ({ ...t, user_id: currentUser.id })));
           if (type === 'flashcards') await supabaseClient.from('flashcards').upsert(flashcards.map(f => ({ ...f, user_id: currentUser.id })));
           if (type === 'cases') await supabaseClient.from('clinical_cases').upsert(clinicalCases.map(c => ({ ...c, user_id: currentUser.id })));
-        } catch (err) {
-          console.log('Error de sincronización con Supabase:', err);
-        }
+        } catch (err) {}
       }
     }
 
-    // --- AUTENTICACIÓN SUPABASE ---
+    // --- AUTENTICACIÓN & VINCULACIÓN DE CLAVE GEMINI ---
     function toggleAuthModal(show) {
       document.getElementById('auth-modal').classList.toggle('hidden', !show);
     }
@@ -856,7 +1232,6 @@
       if (!supabaseClient) {
         currentUser = { id: 'local-user', email };
         updateAuthUI(true, email);
-        toggleAuthModal(false);
         return;
       }
 
@@ -864,10 +1239,9 @@
         const { data, error } = await supabaseClient.auth.signUp({ email, password });
         if (error) alert('Error al registrarse: ' + error.message);
         else {
-          alert('¡Registro exitoso! Ya puedes iniciar sesión con tu cuenta.');
+          alert('¡Registro exitoso! Ya puedes iniciar sesión.');
           currentUser = data.user;
           updateAuthUI(true, email);
-          toggleAuthModal(false);
         }
       } else {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -875,8 +1249,7 @@
         else {
           currentUser = data.user;
           updateAuthUI(true, email);
-          toggleAuthModal(false);
-          loadCloudData();
+          loadCloudUserData();
         }
       }
     }
@@ -885,7 +1258,6 @@
       if (supabaseClient) supabaseClient.auth.signOut();
       currentUser = null;
       updateAuthUI(false);
-      toggleAuthModal(false);
     }
 
     function updateAuthUI(isConnected, email = '') {
@@ -894,33 +1266,53 @@
       const userBox = document.getElementById('auth-user-connected');
 
       if (isConnected) {
-        document.getElementById('auth-btn-label').textContent = 'Nube Activa';
+        document.getElementById('auth-btn-label').textContent = 'Cuenta Activa';
         btn.className = 'px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-emerald-600/30';
         formBox.classList.add('hidden');
         userBox.classList.remove('hidden');
         document.getElementById('connected-user-email').textContent = email;
+        document.getElementById('user-gemini-key').value = userGeminiApiKey;
       } else {
-        document.getElementById('auth-btn-label').textContent = 'Mi Cuenta Nube';
+        document.getElementById('auth-btn-label').textContent = 'Mi Cuenta & IA';
         btn.className = 'px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-lg shadow-indigo-600/30';
         formBox.classList.remove('hidden');
         userBox.classList.add('hidden');
       }
     }
 
-    async function loadCloudData() {
+    async function saveUserGeminiKey() {
+      const key = document.getElementById('user-gemini-key').value.trim();
+      userGeminiApiKey = key;
+      localStorage.setItem('study_gemini_key', key);
+
+      if (supabaseClient && currentUser) {
+        try {
+          await supabaseClient.from('user_profiles').upsert({
+            id: currentUser.id,
+            gemini_api_key: key
+          });
+        } catch (e) {}
+      }
+
+      alert('¡Clave de Google Gemini guardada con éxito!');
+      toggleAuthModal(false);
+    }
+
+    async function loadCloudUserData() {
       if (!supabaseClient || !currentUser) return;
       try {
+        const { data: profile } = await supabaseClient.from('user_profiles').select('gemini_api_key').eq('id', currentUser.id).single();
+        if (profile && profile.gemini_api_key) {
+          userGeminiApiKey = profile.gemini_api_key;
+          localStorage.setItem('study_gemini_key', userGeminiApiKey);
+          document.getElementById('user-gemini-key').value = userGeminiApiKey;
+        }
+
         const { data: cloudCards } = await supabaseClient.from('flashcards').select('*').eq('user_id', currentUser.id);
         if (cloudCards && cloudCards.length > 0) {
           flashcards = cloudCards;
           saveData('flashcards');
           renderFlashcards();
-        }
-        const { data: cloudTasks } = await supabaseClient.from('tasks').select('*').eq('user_id', currentUser.id);
-        if (cloudTasks && cloudTasks.length > 0) {
-          tasks = cloudTasks;
-          saveData('tasks');
-          renderTasks();
         }
       } catch (e) {}
     }
@@ -941,7 +1333,8 @@
 
       isAnswerVisible = false;
       document.getElementById('case-answer-box').classList.add('hidden');
-      document.getElementById('text-btn-answer').textContent = "Revelar Rúbrica Oral";
+      document.getElementById('oral-ai-feedback').classList.add('hidden');
+      document.getElementById('text-btn-answer').textContent = "Ver Rúbrica Modelo";
       document.getElementById('icon-eye-answer').className = "fa-solid fa-eye";
       resetOralTimer();
     }
@@ -949,7 +1342,7 @@
     function toggleCaseAnswer() {
       isAnswerVisible = !isAnswerVisible;
       document.getElementById('case-answer-box').classList.toggle('hidden', !isAnswerVisible);
-      document.getElementById('text-btn-answer').textContent = isAnswerVisible ? "Ocultar Rúbrica" : "Revelar Rúbrica Oral";
+      document.getElementById('text-btn-answer').textContent = isAnswerVisible ? "Ocultar Rúbrica" : "Ver Rúbrica Modelo";
       document.getElementById('icon-eye-answer').className = isAnswerVisible ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
     }
 
@@ -958,26 +1351,6 @@
       let next = currentCaseIndex;
       while (next === currentCaseIndex) next = Math.floor(Math.random() * clinicalCases.length);
       currentCaseIndex = next;
-      renderCurrentCase();
-    }
-
-    function toggleCaseModal(show) {
-      document.getElementById('case-modal').classList.toggle('hidden', !show);
-    }
-
-    function handleCreateCase(e) {
-      e.preventDefault();
-      clinicalCases.push({
-        id: Date.now(),
-        category: document.getElementById('new-case-cat').value.trim(),
-        vignette: document.getElementById('new-case-vignette').value.trim(),
-        question: document.getElementById('new-case-q').value.trim(),
-        answer: document.getElementById('new-case-ans').value.trim(),
-        keyPoints: "Personalizado"
-      });
-      saveData('cases');
-      toggleCaseModal(false);
-      currentCaseIndex = clinicalCases.length - 1;
       renderCurrentCase();
     }
 
@@ -996,10 +1369,10 @@
       if (isOralRunning) {
         clearInterval(oralTimerInterval);
         isOralRunning = false;
-        document.getElementById('icon-oral-play').className = 'fa-solid fa-play';
+        document.getElementById('btn-oral-toggle').innerHTML = '<i class="fa-solid fa-microphone"></i> Iniciar Respuesta por Voz';
       } else {
         isOralRunning = true;
-        document.getElementById('icon-oral-play').className = 'fa-solid fa-pause';
+        document.getElementById('btn-oral-toggle').innerHTML = '<i class="fa-solid fa-pause"></i> Pausar Respuesta';
         oralTimerInterval = setInterval(() => {
           if (oralTimerSeconds > 0) {
             oralTimerSeconds--;
@@ -1007,7 +1380,8 @@
           } else {
             clearInterval(oralTimerInterval);
             isOralRunning = false;
-            document.getElementById('icon-oral-play').className = 'fa-solid fa-play';
+            document.getElementById('btn-oral-toggle').innerHTML = '<i class="fa-solid fa-microphone"></i> Iniciar Respuesta por Voz';
+            if (recognition) recognition.stop();
             alert('¡Tiempo de respuesta oral concluido!');
           }
         }, 1000);
@@ -1017,92 +1391,11 @@
     function resetOralTimer() {
       clearInterval(oralTimerInterval);
       isOralRunning = false;
-      document.getElementById('icon-oral-play').className = 'fa-solid fa-play';
+      document.getElementById('btn-oral-toggle').innerHTML = '<i class="fa-solid fa-microphone"></i> Iniciar Respuesta por Voz';
+      if (recognition) recognition.stop();
       oralTimerSeconds = 90;
       updateOralTimerDisplay();
-    }
-
-    // --- GRABADORA DE NOTAS DE VOZ (FEYNMAN) ---
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-    let recTimerInterval = null;
-    let recSeconds = 0;
-
-    async function toggleAudioRecording() {
-      if (!isRecording) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-          mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = () => {
-              savedAudios.unshift({
-                id: Date.now(),
-                title: document.getElementById('voice-note-title').value.trim() || 'Explicación Feynman',
-                tag: document.getElementById('voice-note-tag').value,
-                duration: `${Math.floor(recSeconds / 60)}m ${recSeconds % 60}s`,
-                date: new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }),
-                dataUrl: reader.result
-              });
-              saveData('audio');
-              renderAudioList();
-              document.getElementById('voice-note-title').value = '';
-            };
-          };
-          mediaRecorder.start();
-          isRecording = true;
-          recSeconds = 0;
-          document.getElementById('rec-status').textContent = 'Grabando...';
-          document.getElementById('rec-status').className = 'text-xs uppercase font-bold text-rose-400 animate-pulse';
-          document.getElementById('icon-record').className = 'fa-solid fa-stop';
-          recTimerInterval = setInterval(() => {
-            recSeconds++;
-            const m = Math.floor(recSeconds / 60);
-            const s = recSeconds % 60;
-            document.getElementById('rec-timer').textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-          }, 1000);
-        } catch (err) { alert('Permiso de micrófono denegado.'); }
-      } else {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-        clearInterval(recTimerInterval);
-        isRecording = false;
-        document.getElementById('rec-status').textContent = 'Guardado';
-        document.getElementById('rec-status').className = 'text-xs uppercase font-bold text-emerald-400';
-        document.getElementById('icon-record').className = 'fa-solid fa-microphone';
-        document.getElementById('rec-timer').textContent = '00:00';
-      }
-    }
-
-    function renderAudioList() {
-      const list = document.getElementById('audio-list');
-      document.getElementById('audio-count').textContent = `${savedAudios.length} audios`;
-      if (savedAudios.length === 0) {
-        list.innerHTML = `<div class="text-center py-10 text-slate-500 text-xs">No tienes audios guardados.</div>`;
-        return;
-      }
-      list.innerHTML = savedAudios.map(a => `
-        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <span class="text-[10px] font-bold uppercase bg-rose-950 text-rose-300 px-2 py-0.5 rounded">${a.tag}</span>
-            <h4 class="text-xs font-semibold text-white mt-1">${a.title}</h4>
-          </div>
-          <div class="flex items-center gap-2">
-            <audio controls class="h-8 max-w-[200px]"><source src="${a.dataUrl}" type="audio/webm"></audio>
-            <button onclick="deleteAudio(${a.id})" class="text-slate-500 hover:text-rose-400 p-1"><i class="fa-solid fa-trash text-xs"></i></button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function deleteAudio(id) {
-      savedAudios = savedAudios.filter(a => a.id !== id);
-      saveData('audio');
-      renderAudioList();
+      document.getElementById('oral-transcript-text').textContent = 'Presiona "Iniciar Respuesta por Voz" para comenzar a responder...';
     }
 
     // --- FLASHCARDS ---
@@ -1136,27 +1429,6 @@
 
     function rateCard() {
       currentCardIndex = (currentCardIndex + 1) % flashcards.length;
-      renderFlashcards();
-    }
-
-    function toggleCardModal(show) {
-      document.getElementById('card-modal').classList.toggle('hidden', !show);
-    }
-
-    function handleCreateCard(e) {
-      e.preventDefault();
-      flashcards.push({
-        id: Date.now(),
-        tag: document.getElementById('fc-tag').value.trim(),
-        front: document.getElementById('fc-front').value.trim(),
-        back: document.getElementById('fc-back').value.trim()
-      });
-      saveData('flashcards');
-      document.getElementById('fc-tag').value = '';
-      document.getElementById('fc-front').value = '';
-      document.getElementById('fc-back').value = '';
-      toggleCardModal(false);
-      currentCardIndex = flashcards.length - 1;
       renderFlashcards();
     }
 
@@ -1237,81 +1509,35 @@
       document.getElementById('stat-minutes').textContent = `${studyStats.minutes} min`;
     }
 
-    // --- TAREAS ---
-    function renderTasks() {
-      const list = document.getElementById('tasks-list');
-      document.getElementById('task-count').textContent = `${tasks.length} tareas`;
-      if (tasks.length === 0) {
-        list.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay tareas pendientes.</p>`;
-        return;
-      }
-      list.innerHTML = tasks.map(task => `
-        <div class="flex items-center justify-between p-3 rounded-xl ${task.done ? 'bg-slate-950/40 border-slate-900' : 'bg-slate-950 border-slate-800'} border transition hover:border-slate-700">
-          <div class="flex items-center gap-3 overflow-hidden">
-            <button onclick="toggleTask(${task.id})" class="w-6 h-6 rounded-lg flex items-center justify-center border transition ${task.done ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-700 text-transparent hover:border-indigo-400'}">
-              <i class="fa-solid fa-check text-xs"></i>
-            </button>
-            <div class="truncate">
-              <p class="text-xs md:text-sm font-medium ${task.done ? 'line-through text-slate-500' : 'text-slate-200'} truncate">${task.title}</p>
-              <span class="text-[10px] font-semibold text-indigo-400">${task.subject}</span>
-            </div>
-          </div>
-          <button onclick="deleteTask(${task.id})" class="text-slate-500 hover:text-rose-400 p-2 transition"><i class="fa-solid fa-trash text-xs"></i></button>
-        </div>
-      `).join('');
-    }
-
-    function handleAddTask(e) {
-      e.preventDefault();
-      tasks.unshift({
-        id: Date.now(),
-        title: document.getElementById('task-title').value.trim(),
-        subject: document.getElementById('task-subject').value,
-        done: false
-      });
-      saveData('tasks');
-      document.getElementById('task-title').value = '';
-      renderTasks();
-    }
-
-    function toggleTask(id) {
-      tasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
-      saveData('tasks');
-      renderTasks();
-    }
-
-    function deleteTask(id) {
-      tasks = tasks.filter(t => t.id !== id);
-      saveData('tasks');
-      renderTasks();
-    }
-
     // --- NAVEGACIÓN ---
     function switchTab(tab) {
-      ['atlas', 'cases', 'audio', 'flashcards', 'timer', 'tasks'].forEach(t => {
-        document.getElementById(`view-${t}`).classList.add('hidden');
+      ['notebook', 'atlas', 'cases', 'pae', 'calc', 'diagrams', 'flashcards', 'timer'].forEach(t => {
+        const el = document.getElementById(`view-${t}`);
+        if (el) el.classList.add('hidden');
       });
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.className = 'tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap';
       });
-      document.getElementById(`view-${tab}`).classList.remove('hidden');
-      document.getElementById(`nav-${tab}`).className = 'tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap';
+      const activeView = document.getElementById(`view-${tab}`);
+      if (activeView) activeView.classList.remove('hidden');
+
+      const activeNav = document.getElementById(`nav-${tab}`);
+      if (activeNav) activeNav.className = 'tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap';
 
       if (tab === 'flashcards') renderFlashcards();
-      else if (tab === 'tasks') renderTasks();
-      else if (tab === 'audio') renderAudioList();
       else if (tab === 'cases') renderCurrentCase();
+      else if (tab === 'calc') { calculateDripRate(); calculateDose(); }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
       setAnatomyLayer('muscles_full');
       renderCurrentCase();
-      renderAudioList();
       updateTimerDisplay();
       updateOralTimerDisplay();
       updateStatsUI();
-      renderTasks();
       renderFlashcards();
+      calculateDripRate();
+      calculateDose();
     });
   </script>
 </body>
