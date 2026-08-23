@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudyHub Pro Clinical Suite - Atlas 3D, PAE, Dosificación & Notebook IA</title>
+  <title>StudyHub Pro Clinical Suite - Atlas 3D Nativo, PAE, Dosificación & Notebook IA</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Mermaid.js para Mapas Conceptuales y Diagramas -->
+  <!-- Three.js & OrbitControls para Visor 3D Nativo sin fallos de iframe -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <!-- Mermaid.js para Mapas Conceptuales -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
   <style>
@@ -22,6 +25,7 @@
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    #atlas-canvas-container canvas { width: 100% !important; height: 100% !important; outline: none; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
@@ -37,7 +41,7 @@
           <h1 class="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
             StudyHub <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1"><i class="fa-solid fa-stethoscope"></i> Clinical Suite Pro</span>
           </h1>
-          <p class="text-[11px] text-slate-400">Atlas 3D &bull; PAE &bull; Dosificación &bull; Notebook IA &bull; Casos</p>
+          <p class="text-[11px] text-slate-400">Atlas 3D Nativo &bull; PAE &bull; Dosificación &bull; Notebook IA</p>
         </div>
       </div>
 
@@ -52,31 +56,31 @@
         </button>
       </div>
 
-      <!-- Barra de Pestañas Completa -->
+      <!-- Barra de Pestañas -->
       <nav class="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 overflow-x-auto max-w-full gap-1 w-full md:w-auto">
-        <button onclick="switchTab('notebook')" id="nav-notebook" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap">
+        <button onclick="switchTab('atlas')" id="nav-atlas" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap">
+          <i class="fa-solid fa-layer-group text-indigo-200"></i>
+          <span>Atlas 3D Nativo</span>
+        </button>
+        <button onclick="switchTab('notebook')" id="nav-notebook" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-book-bookmark text-amber-300"></i>
           <span>Notebook IA (PDF)</span>
         </button>
-        <button onclick="switchTab('atlas')" id="nav-atlas" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
-          <i class="fa-solid fa-layer-group"></i>
-          <span>Atlas 3D</span>
-        </button>
         <button onclick="switchTab('cases')" id="nav-cases" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-file-waveform"></i>
-          <span>Simulador Oral (Voz)</span>
+          <span>Simulador Oral</span>
         </button>
         <button onclick="switchTab('pae')" id="nav-pae" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-notes-medical text-rose-400"></i>
-          <span>PAE (NANDA-NOC-NIC)</span>
+          <span>PAE</span>
         </button>
         <button onclick="switchTab('calc')" id="nav-calc" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-calculator text-cyan-400"></i>
-          <span>Dosificación & Goteo</span>
+          <span>Dosificación</span>
         </button>
         <button onclick="switchTab('diagrams')" id="nav-diagrams" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-diagram-project text-emerald-400"></i>
-          <span>Mapas & Vancouver</span>
+          <span>Mapas & Citas</span>
         </button>
         <button onclick="switchTab('flashcards')" id="nav-flashcards" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-clone"></i>
@@ -93,15 +97,135 @@
   <!-- Contenedor Principal -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
 
+    <!-- ==================== 0. ATLAS 3D ANATÓMICO NATIVO POR CAPAS ==================== -->
+    <section id="view-atlas" class="space-y-6">
+      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-cube text-indigo-400"></i> Atlas Anatómico 3D de Alta Velocidad (WebGL)
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400">
+            Disección fluida por capas, rotación 360°, pines interactivos de estructuras y fichas clínicas para examen oral.
+          </p>
+        </div>
+        <!-- Selector de Modo de Visualización -->
+        <div class="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+          <button onclick="switchAtlasViewerMode('native')" id="btn-mode-native" class="px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white transition shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-bolt text-amber-300"></i> Modo 3D Nativo (Rápido)
+          </button>
+          <button onclick="switchAtlasViewerMode('cadav')" id="btn-mode-cadav" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <i class="fa-solid fa-vr-cardboard"></i> Modo Cadavérico HD
+          </button>
+        </div>
+      </div>
+
+      <!-- Selector de Capas Anatómicas -->
+      <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap gap-2 text-xs">
+          <button onclick="setNativeAnatomyModel('muscles')" id="btn-cat-muscles" class="px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white transition shadow flex items-center gap-1.5">
+            <i class="fa-solid fa-person-running"></i> 1. Sistema Muscular (Écorché)
+          </button>
+          <button onclick="setNativeAnatomyModel('neuro')" id="btn-cat-neuro" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <i class="fa-solid fa-brain"></i> 2. Sistema Nervioso & Pares
+          </button>
+          <button onclick="setNativeAnatomyModel('cardio')" id="btn-cat-cardio" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <i class="fa-solid fa-heart-pulse"></i> 3. Corazón & Grandes Vasos
+          </button>
+          <button onclick="setNativeAnatomyModel('spine')" id="btn-cat-spine" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <i class="fa-solid fa-bone"></i> 4. Columna & Canal Raquídeo
+          </button>
+          <button onclick="setNativeAnatomyModel('skull')" id="btn-cat-skull" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
+            <i class="fa-solid fa-skull"></i> 5. Cráneo & Base Ósea
+          </button>
+        </div>
+
+        <!-- Slider de Nivel de Disección / Opacidad -->
+        <div class="flex items-center gap-2 text-xs text-slate-300 bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+          <i class="fa-solid fa-sliders text-indigo-400"></i>
+          <span>Plano de Disección:</span>
+          <input type="range" id="dissection-slider" min="0" max="100" value="70" oninput="adjustDissectionLayer(this.value)" class="w-24 accent-indigo-500 cursor-pointer">
+          <span id="slider-label" class="font-mono text-indigo-400 font-bold">Medio</span>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-3 gap-6">
+        <!-- Contenedor del Visor 3D -->
+        <div class="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-2xl p-2 relative shadow-2xl overflow-hidden flex flex-col">
+          
+          <!-- Visor 3D Nativo WebGL (Three.js - Carga instantánea a 60fps) -->
+          <div id="atlas-canvas-container" class="w-full h-[470px] md:h-[550px] relative bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center cursor-grab active:cursor-grabbing">
+            <!-- Canvas inyectado dinámicamente por Three.js -->
+            <div id="canvas-loading" class="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center space-y-2 text-slate-400">
+              <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-500"></i>
+              <span class="text-xs font-semibold">Inicializando aceleración 3D WebGL...</span>
+            </div>
+
+            <!-- Controles flotantes en pantalla -->
+            <div class="absolute bottom-3 left-3 bg-slate-900/85 backdrop-blur border border-slate-700/70 rounded-xl px-3 py-2 flex items-center gap-2 text-xs shadow-lg z-10">
+              <button onclick="reset3DCamera()" class="text-slate-300 hover:text-white px-2 py-1 rounded bg-slate-800 text-[11px] font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-arrows-rotate"></i> Centrar
+              </button>
+              <button onclick="toggleAutoRotate()" id="btn-auto-rot" class="text-slate-300 hover:text-white px-2 py-1 rounded bg-slate-800 text-[11px] font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-rotate"></i> Giro Auto
+              </button>
+              <span class="text-[10px] text-slate-400 hidden sm:inline">&bull; Arrastra para rotar en 360°</span>
+            </div>
+          </div>
+
+          <!-- Visor Cadavérico HD Alternativo (Iframe con fallback controlado) -->
+          <div id="atlas-iframe-container" class="hidden w-full h-[470px] md:h-[550px] relative bg-slate-950 rounded-xl overflow-hidden">
+            <iframe id="anatomy-iframe-viewer"
+              class="w-full h-full border-0 rounded-xl"
+              src=""
+              allow="autoplay; fullscreen; xr-spatial-tracking"
+              allowfullscreen>
+            </iframe>
+          </div>
+        </div>
+
+        <!-- Panel Lateral: Ficha Descriptiva & Estructuras -->
+        <div class="space-y-4 flex flex-col justify-between">
+          <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <span id="layer-badge" class="text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-950/80 px-3 py-1 rounded-full border border-rose-800">
+                Plano Muscular (Miología)
+              </span>
+              <span id="layer-structure-count" class="text-[11px] text-slate-400">4 estructuras</span>
+            </div>
+
+            <div>
+              <h3 id="layer-title" class="text-xl font-bold text-white mb-1">Músculos del Tórax y Hombro</h3>
+              <p id="layer-desc" class="text-xs text-slate-300 leading-relaxed">
+                Selecciona una estructura para enfocarla en 3D y desplegar su ficha anatómica completa.
+              </p>
+            </div>
+
+            <!-- Botones de Estructuras Específicas -->
+            <div class="space-y-2">
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Estructuras Cardinales:</label>
+              <div id="sub-structure-chips" class="flex flex-wrap gap-1.5"></div>
+            </div>
+
+            <!-- Ficha Técnica Anatómica & Clínica -->
+            <div id="structure-detail-box" class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2 text-xs"></div>
+
+            <button onclick="sendCurrentStructureToFlashcards()" class="w-full bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
+              <i class="fa-solid fa-file-circle-plus"></i> Guardar como Flashcard de Repaso
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ==================== 1. NOTEBOOK IA (PDFs) ==================== -->
-    <section id="view-notebook" class="space-y-6">
+    <section id="view-notebook" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-book-open-reader text-amber-400"></i> Notebook IA: Procesamiento Clínico de PDFs
           </h2>
           <p class="text-xs md:text-sm text-slate-400">
-            Sube capítulos, guías clínicas o artículos para extraer casos clínicos, flashcards, planes PAE o diagramas conceptuales automáticos.
+            Sube capítulos, guías clínicas o diapositivas para generar casos orales, flashcards y resúmenes estructurados.
           </p>
         </div>
       </div>
@@ -117,27 +241,23 @@
               class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-6 text-center cursor-pointer transition bg-slate-950/60 flex flex-col items-center justify-center space-y-2">
               <i class="fa-solid fa-file-pdf text-3xl text-rose-500"></i>
               <p id="pdf-file-name" class="text-xs text-slate-300 font-semibold">Toca para seleccionar tu archivo PDF</p>
-              <p class="text-[10px] text-slate-500">Guías clínicas, capítulos o diapositivas (hasta 50 MB)</p>
+              <p class="text-[10px] text-slate-500">Capítulos o guías de estudio (hasta 50 MB)</p>
               <input type="file" id="pdf-file-input" accept="application/pdf,image/*" class="hidden" onchange="handlePDFUpload(event)">
             </div>
 
             <div class="space-y-2 pt-1">
-              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Acciones con IA:</label>
-              
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Acciones Rápidas:</label>
               <button onclick="askPDFAction('cases')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-stethoscope text-emerald-400"></i> Crear 2 Casos Clínicos del PDF
               </button>
-
               <button onclick="askPDFAction('flashcards')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-clone text-indigo-400"></i> Generar 4 Flashcards del PDF
               </button>
-
               <button onclick="askPDFAction('pae')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-notes-medical text-rose-400"></i> Extraer Plan PAE (NANDA-NOC-NIC)
+                <i class="fa-solid fa-notes-medical text-rose-400"></i> Extraer Plan PAE (NANDA-NIC)
               </button>
-
               <button onclick="askPDFAction('summary')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-brain text-amber-400"></i> Síntesis & Puntos de Examen Oral
+                <i class="fa-solid fa-brain text-amber-400"></i> Resumen para Examen Oral
               </button>
             </div>
           </div>
@@ -157,9 +277,8 @@
               <p class="font-semibold text-slate-300 flex items-center gap-1.5">
                 <i class="fa-solid fa-sparkles text-amber-400"></i> Asistente de Lectura Crítica:
               </p>
-              <p>1. Carga tu PDF (o capítulos individuales) en el panel izquierdo.</p>
+              <p>1. Carga tu PDF en el panel izquierdo.</p>
               <p>2. Ejecuta una acción rápida o haz preguntas directas sobre el contenido.</p>
-              <p>3. Todos los casos, flashcards y planes generados se agregan a tu suite de estudio.</p>
             </div>
           </div>
 
@@ -173,86 +292,7 @@
       </div>
     </section>
 
-    <!-- ==================== 2. ATLAS 3D POR CAPAS ==================== -->
-    <section id="view-atlas" class="hidden space-y-6">
-      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-        <div>
-          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-layer-group text-indigo-400"></i> Atlas Anatómico de Disección 3D por Capas
-          </h2>
-          <p class="text-xs md:text-sm text-slate-400">
-            Disección con nombres estructurados, origen/inserción, inervación y correlación clínica para examen oral.
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="reload3DViewer()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-slate-200 transition flex items-center gap-1.5 border border-slate-700">
-            <i class="fa-solid fa-arrows-rotate"></i> Recargar
-          </button>
-        </div>
-      </div>
-
-      <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i class="fa-solid fa-sliders text-indigo-400"></i> Capa Anatómica:
-        </span>
-        <div class="flex flex-wrap gap-2 text-xs">
-          <button onclick="setAnatomyLayer('muscles_full')" id="btn-layer-muscles_full" class="px-3 py-1.5 rounded-xl font-bold bg-rose-600 text-white transition shadow flex items-center gap-1.5">
-            <i class="fa-solid fa-person-running"></i> 1. Músculos
-          </button>
-          <button onclick="setAnatomyLayer('neuro_brain')" id="btn-layer-neuro_brain" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-brain"></i> 2. Sistema Nervioso
-          </button>
-          <button onclick="setAnatomyLayer('cardio_visceral')" id="btn-layer-cardio_visceral" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-heart-pulse"></i> 3. Corazón & Vasos
-          </button>
-          <button onclick="setAnatomyLayer('skeletal_spine')" id="btn-layer-skeletal_spine" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-bone"></i> 4. Columna & Médula
-          </button>
-          <button onclick="setAnatomyLayer('skull_base')" id="btn-layer-skull_base" class="px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5">
-            <i class="fa-solid fa-skull"></i> 5. Cráneo
-          </button>
-        </div>
-      </div>
-
-      <div class="grid lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-2xl p-2 relative shadow-2xl overflow-hidden flex flex-col">
-          <div class="w-full h-[480px] md:h-[560px] relative bg-slate-950 rounded-xl overflow-hidden">
-            <iframe id="anatomy-iframe-viewer"
-              class="w-full h-full border-0 rounded-xl"
-              src="https://sketchfab.com/models/75cc6aa94b5c4ed88f9810770d614ac1/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1"
-              allow="autoplay; fullscreen; xr-spatial-tracking"
-              allowfullscreen>
-            </iframe>
-          </div>
-        </div>
-
-        <div class="space-y-4 flex flex-col justify-between">
-          <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-              <span id="layer-badge" class="text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-950/80 px-3 py-1 rounded-full border border-rose-800">Plano Muscular</span>
-            </div>
-
-            <div>
-              <h3 id="layer-title" class="text-xl font-bold text-white mb-1">Músculos</h3>
-              <p id="layer-desc" class="text-xs text-slate-300 leading-relaxed"></p>
-            </div>
-
-            <div class="space-y-2">
-              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Estructura:</label>
-              <div id="sub-structure-chips" class="flex flex-wrap gap-1.5"></div>
-            </div>
-
-            <div id="structure-detail-box" class="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-2.5 text-xs"></div>
-
-            <button onclick="sendCurrentStructureToFlashcards()" class="w-full bg-indigo-600/20 hover:bg-indigo-600 text-indigo-300 hover:text-white border border-indigo-500/40 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
-              <i class="fa-solid fa-file-circle-plus"></i> Guardar como Flashcard de Repaso
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== 3. SIMULADOR ORAL CON EVALUADOR DE VOZ ==================== -->
+    <!-- ==================== 2. SIMULADOR ORAL CON EVALUADOR DE VOZ ==================== -->
     <section id="view-cases" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div>
@@ -286,7 +326,6 @@
               <p id="case-question" class="text-sm md:text-base text-white font-semibold">¿Pregunta?</p>
             </div>
 
-            <!-- Transcripción en Vivo de tu Respuesta Oral -->
             <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
               <div class="flex justify-between items-center text-xs">
                 <span class="font-bold text-slate-300 flex items-center gap-1.5">
@@ -294,10 +333,9 @@
                 </span>
                 <span id="oral-stt-status" class="text-[10px] text-slate-500 uppercase">Micrófono inactivo</span>
               </div>
-              <p id="oral-transcript-text" class="text-xs text-slate-300 italic min-h-[40px]">Presiona "Iniciar Respuesta por Voz" para comenzar a responder...</p>
+              <p id="oral-transcript-text" class="text-xs text-slate-300 italic min-h-[40px]">Presiona "Iniciar Respuesta por Voz" para comenzar...</p>
             </div>
 
-            <!-- Evaluación de la IA -->
             <div id="oral-ai-feedback" class="hidden p-4 bg-indigo-950/40 border border-indigo-800 rounded-xl space-y-2 text-xs">
               <div class="font-bold text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap"></i> Retroalimentación Docente con IA:</div>
               <p id="oral-feedback-content" class="text-slate-200 leading-relaxed"></p>
@@ -325,7 +363,7 @@
 
         <div class="space-y-6">
           <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <h3 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-stopwatch text-amber-400"></i> Reloj de Exposición Oral (90s)</h3>
+            <h3 class="text-base font-bold text-white flex items-center gap-2"><i class="fa-solid fa-stopwatch text-amber-400"></i> Reloj de Exposición (90s)</h3>
             <div class="text-center py-4 bg-slate-950 rounded-xl border border-slate-800">
               <div id="oral-timer-display" class="text-5xl font-black font-mono text-amber-400">01:30</div>
             </div>
@@ -342,16 +380,14 @@
       </div>
     </section>
 
-    <!-- ==================== 4. PROCESO DE ATENCIÓN DE ENFERMERÍA (PAE / NANDA-NOC-NIC) ==================== -->
+    <!-- ==================== 3. PAE / NANDA-NOC-NIC ==================== -->
     <section id="view-pae" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-notes-medical text-rose-400"></i> Plan de Cuidados & Metodología PAE
           </h2>
-          <p class="text-xs md:text-sm text-slate-400">
-            Estructuración estandarizada del Proceso de Atención de Enfermería: Valoración, Diagnóstico NANDA, Resultados NOC e Intervenciones NIC.
-          </p>
+          <p class="text-xs md:text-sm text-slate-400">Valoración, Diagnóstico NANDA, Resultados NOC e Intervenciones NIC estructuradas.</p>
         </div>
         <button onclick="generateAIPAEPlan()" id="btn-gen-pae" class="px-4 py-2 bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5 shadow-lg">
           <i class="fa-solid fa-wand-magic-sparkles"></i> Generar PAE Completo con IA
@@ -359,53 +395,39 @@
       </div>
 
       <div class="grid lg:grid-cols-2 gap-6">
-        <!-- 1. Valoración & Diagnóstico NANDA -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <div class="flex items-center gap-2 text-indigo-400 font-bold text-sm border-b border-slate-800 pb-2">
             <i class="fa-solid fa-clipboard-user"></i> 1. Valoración Clínica & Enunciado NANDA
           </div>
           <div>
-            <label class="text-xs font-semibold text-slate-400 block mb-1">Datos Subjetivos & Objetivos Relevantes:</label>
-            <textarea id="pae-assessment" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Ej. Paciente refiere dolor en hemitórax 8/10, taquipnea (FR 26 rpm), SatO2 89%, diaforesis..."></textarea>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">Datos Subjetivos & Objetivos:</label>
+            <textarea id="pae-assessment" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="Ej. Dolor 8/10, taquipnea (FR 26 rpm), SatO2 89%..."></textarea>
           </div>
           <div>
             <label class="text-xs font-semibold text-slate-400 block mb-1">Diagnóstico de Enfermería (NANDA):</label>
-            <textarea id="pae-nanda" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-rose-500" placeholder="Ej. [00032] Patrón respiratorio ineficaz relacionado con fatiga muscular evidenciado por disnea y taquipnea."></textarea>
+            <textarea id="pae-nanda" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-rose-500" placeholder="[00032] Patrón respiratorio ineficaz r/c fatiga muscular m/p disnea..."></textarea>
           </div>
         </div>
 
-        <!-- 2. Resultados NOC & Intervenciones NIC -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm border-b border-slate-800 pb-2">
-            <i class="fa-solid fa-bullseye"></i> 2. Criterios de Resultado (NOC) & Actividades (NIC)
+            <i class="fa-solid fa-bullseye"></i> 2. Criterios NOC & Actividades NIC
           </div>
           <div>
             <label class="text-xs font-semibold text-slate-400 block mb-1">Resultados Esperados (NOC):</label>
-            <textarea id="pae-noc" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500" placeholder="Ej. [0415] Estado respiratorio: FR en rango normal (16-20 rpm), SatO2 > 92% a los 30 min."></textarea>
+            <textarea id="pae-noc" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-emerald-500" placeholder="[0415] Estado respiratorio: FR 16-20 rpm, SatO2 > 92%..."></textarea>
           </div>
           <div>
             <label class="text-xs font-semibold text-slate-400 block mb-1">Intervenciones & Cuidados (NIC):</label>
-            <textarea id="pae-nic" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-cyan-500" placeholder="Ej. [3350] Monitorización respiratoria; [3320] Oxigenoterapia; Posición semifowler a 45°."></textarea>
+            <textarea id="pae-nic" rows="3" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-cyan-500" placeholder="[3350] Monitorización respiratoria; [3320] Oxigenoterapia..."></textarea>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ==================== 5. CALCULADORA CLÍNICA & DOSIFICACIÓN FARMACOLÓGICA ==================== -->
+    <!-- ==================== 4. CALCULADORA & DOSIFICACIÓN ==================== -->
     <section id="view-calc" class="hidden space-y-6">
-      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-        <div>
-          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-calculator text-cyan-400"></i> Calculadora de Infusión, Goteo & Dosificación Farmacológica
-          </h2>
-          <p class="text-xs md:text-sm text-slate-400">
-            Fórmulas exactas para bombas de infusión (ml/h), macrogotero (20 gtt/ml), microgotero (60 gtt/ml) y regla de tres de dilución.
-          </p>
-        </div>
-      </div>
-
       <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Calculadora de Goteo -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <h3 class="text-sm font-bold text-cyan-300 flex items-center gap-2 border-b border-slate-800 pb-2">
             <i class="fa-solid fa-droplet"></i> Cálculo de Goteo e Infusión
@@ -424,13 +446,12 @@
             </button>
             <div id="calc-drip-result" class="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1 text-slate-300">
               <div class="flex justify-between"><span>Bomba (ml/h):</span><strong class="text-cyan-400 font-mono text-sm" id="res-ml-h">62.5 ml/h</strong></div>
-              <div class="flex justify-between"><span>Macrogotero (gtt/min):</span><strong class="text-emerald-400 font-mono text-sm" id="res-macro">21 gtt/min</strong></div>
-              <div class="flex justify-between"><span>Microgotero (microgtt/min):</span><strong class="text-indigo-400 font-mono text-sm" id="res-micro">63 ugtt/min</strong></div>
+              <div class="flex justify-between"><span>Macrogotero:</span><strong class="text-emerald-400 font-mono text-sm" id="res-macro">21 gtt/min</strong></div>
+              <div class="flex justify-between"><span>Microgotero:</span><strong class="text-indigo-400 font-mono text-sm" id="res-micro">63 ugtt/min</strong></div>
             </div>
           </div>
         </div>
 
-        <!-- Regla de Tres de Dilución -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2 border-b border-slate-800 pb-2">
             <i class="fa-solid fa-vial"></i> Dilución y Dosis Requerida
@@ -451,16 +472,15 @@
               </div>
             </div>
             <button onclick="calculateDose()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-xl transition shadow-lg shadow-amber-600/30">
-              Calcular Volumen a Administrar
+              Calcular Volumen a Inyectar
             </button>
             <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex justify-between items-center text-slate-300">
-              <span>Volumen a Inyectar:</span>
+              <span>Volumen a Administrar:</span>
               <strong class="text-amber-400 font-mono text-base" id="res-dose-ml">2.5 ml</strong>
             </div>
           </div>
         </div>
 
-        <!-- Checklist de los 10 Correctos -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-3">
           <h3 class="text-sm font-bold text-emerald-300 flex items-center gap-2 border-b border-slate-800 pb-2">
             <i class="fa-solid fa-list-check"></i> 10 Correctos en Medicación
@@ -481,18 +501,14 @@
       </div>
     </section>
 
-    <!-- ==================== 6. MAPAS CONCEPTUALES & NORMAS VANCOUVER ==================== -->
+    <!-- ==================== 5. MAPAS CONCEPTUALES & VANCOUVER ==================== -->
     <section id="view-diagrams" class="hidden space-y-6">
       <div class="grid lg:grid-cols-2 gap-6">
-        <!-- Mapas Conceptuales Dinámicos (Mermaid) -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <div class="flex justify-between items-center border-b border-slate-800 pb-2">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
               <i class="fa-solid fa-diagram-project text-emerald-400"></i> Generador de Mapas Conceptuales
             </h3>
-            <button onclick="generateAIMap()" class="text-xs text-indigo-400 font-bold hover:underline flex items-center gap-1">
-              <i class="fa-solid fa-wand-magic-sparkles"></i> Crear con IA
-            </button>
           </div>
           <div id="mermaid-container" class="p-4 bg-slate-950 rounded-xl border border-slate-800 min-h-[220px] flex items-center justify-center overflow-x-auto">
             <div class="mermaid">
@@ -508,7 +524,6 @@ graph TD
           </div>
         </div>
 
-        <!-- Formateador de Citas Vancouver -->
         <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
           <div class="flex justify-between items-center border-b border-slate-800 pb-2">
             <h3 class="text-sm font-bold text-white flex items-center gap-2">
@@ -519,7 +534,7 @@ graph TD
             <input type="text" id="vancouver-author" placeholder="Autor(es) (Ej. Guyton AC, Hall JE)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
             <input type="text" id="vancouver-title" placeholder="Título del capítulo / artículo" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
             <div class="grid grid-cols-2 gap-2">
-              <input type="text" id="vancouver-source" placeholder="Libro / Revista (Ej. Tratado de Fisiología)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+              <input type="text" id="vancouver-source" placeholder="Libro / Revista" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
               <input type="text" id="vancouver-year" placeholder="Año y Páginas (Ej. 2021; p. 115-120)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
             </div>
             <button onclick="formatVancouver()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-xl transition">
@@ -533,7 +548,7 @@ graph TD
       </div>
     </section>
 
-    <!-- ==================== 7. FLASHCARDS ==================== -->
+    <!-- ==================== 6. FLASHCARDS ==================== -->
     <section id="view-flashcards" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4">
         <div>
@@ -581,7 +596,7 @@ graph TD
       </div>
     </section>
 
-    <!-- ==================== 8. POMODORO ==================== -->
+    <!-- ==================== 7. POMODORO ==================== -->
     <section id="view-timer" class="hidden space-y-6">
       <div class="grid md:grid-cols-3 gap-6">
         <div class="md:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center shadow-xl">
@@ -658,10 +673,10 @@ graph TD
   </div>
 
   <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800/80">
-    StudyHub Pro &bull; Suite Clínica y Académica Integral &bull; Notebook IA, PAE, Dosificación & Atlas 3D.
+    StudyHub Pro &bull; Suite Clínica y Académica Integral &bull; Atlas 3D Nativo, Notebook IA & PAE.
   </footer>
 
-  <!-- SCRIPT INTEGRADO: SUITE CLÍNICA COMPLETA -->
+  <!-- SCRIPT INTEGRADO: MOTOR 3D THREE.JS NATIVO, NOTEBOOK IA & SUITE CLÍNICA -->
   <script>
     const SUPABASE_URL = 'https://ohwxgmtxaagkeerudfnm.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9od3hnbXR4YWFna2VlcnVkZm5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0NDM2MjksImV4cCI6MjEwMzAxOTYyOX0.-t0_lOh8VtR24ww7pCL0Cwvj4IIR529AnrPHsSX1jRk';
@@ -683,7 +698,505 @@ graph TD
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch (e) {}
 
-    // Inicializar SpeechRecognition si está soportado
+    // ==========================================
+    // --- MOTOR 3D WEBGL NATIVO (THREE.JS) ---
+    // ==========================================
+    let threeScene, threeCamera, threeRenderer, threeControls;
+    let currentAnatomyMeshGroup = null;
+    let isAutoRotating = false;
+    let activeModelKey = 'muscles';
+
+    const nativeAnatomyDB = {
+      muscles: {
+        title: "Sistema Muscular Completo (Écorché)",
+        badge: "Miología / Superficial & Profundo",
+        badgeColor: "text-rose-400 bg-rose-950/80 border-rose-800",
+        btnColor: "bg-rose-600 text-white",
+        desc: "Disección tridimensional de los grupos musculares del hombro, tórax y extremidades con inserciones e inervación.",
+        structures: [
+          {
+            name: "Manguito Rotador (Regla SIRS)",
+            type: "Músculos del Hombro",
+            origin_insertion: "Fosas escapulares -> Troquíter y Troquín humeral.",
+            innervation: "Nervio Supraescapular (C5-C6), Axilar y Subescapular.",
+            action: "Abducción inicial (0-15° supraespinoso), rotación externa (infraespinoso/redondo menor) y rotación interna (subescapular).",
+            clinical_pearl: "Signo de Neer y Hawkins positivo en tendinitis del supraespinoso."
+          },
+          {
+            name: "Músculo Deltoides",
+            type: "Hombro",
+            origin_insertion: "Clavícula, acromion y espina escapular -> Tuberosidad deltoidea.",
+            innervation: "Nervio Axilar / Circunflejo (C5-C6).",
+            action: "Abductor principal del brazo (15° a 90°).",
+            clinical_pearl: "En luxación anterior de hombro o fractura de cuello quirúrgico de húmero se lesiona el nervio axilar."
+          },
+          {
+            name: "Cuádriceps Femoral",
+            type: "Muslo Anterior",
+            origin_insertion: "Recto femoral y vastos -> Tendón rotuliano en tuberosidad tibial.",
+            innervation: "Nervio Femoral / Crural (L2-L4).",
+            action: "Extensión de la rodilla y flexión de cadera.",
+            clinical_pearl: "Reflejo rotuliano (L3-L4): evalúa la integridad del nervio femoral."
+          }
+        ]
+      },
+      neuro: {
+        title: "Encéfalo, Tronco Encefálico y Pares Craneales",
+        badge: "Sistema Nervioso Central & Pares",
+        badgeColor: "text-indigo-400 bg-indigo-950/80 border-indigo-800",
+        btnColor: "bg-indigo-600 text-white",
+        desc: "Centros superiores de integración motora (Área 4 Brodmann), tronco encefálico y decusación de las pirámides.",
+        structures: [
+          {
+            name: "Corteza Motora Primaria (Área 4 Brodmann)",
+            type: "Telencéfalo",
+            origin_insertion: "Giro precentral del lóbulo frontal.",
+            innervation: "Arteria Cerebral Media (brazo/cara) y Cerebral Anterior (pierna).",
+            action: "Homúnculo Motor de Penfield y origen de la vía corticoespinal descendente.",
+            clinical_pearl: "ACV de cerebral media causa hemiplejía faciobraquial contralateral."
+          },
+          {
+            name: "Decusación Piramidal (Bulbo Raquídeo)",
+            type: "Tronco Encefálico",
+            origin_insertion: "Unión bulbo-medular inferior.",
+            innervation: "Vía Corticoespinal descendente.",
+            action: "Cruce del 85-90% de las fibras motoras al cordón lateral opuesto de la médula.",
+            clinical_pearl: "Lesión por encima del bulbo = déficit contralateral; en médula = déficit homolateral."
+          },
+          {
+            name: "III Par: Nervio Oculomotor",
+            type: "Par Craneal",
+            origin_insertion: "Fosa interpeduncular mesencefálica -> Hendidura esfenoidal.",
+            innervation: "Fibras motoras somáticas + Parasimpáticas de Edinger-Westphal.",
+            action: "Músculos oculomotores, elevador del párpado y constrictor pupilar.",
+            clinical_pearl: "Lesión genera ptosis, midriasis arreactiva y ojo hacia abajo y afuera."
+          }
+        ]
+      },
+      cardio: {
+        title: "Corazón, Aparato Valvular y Grandes Vasos",
+        badge: "Sistema Cardiovascular",
+        badgeColor: "text-amber-400 bg-amber-950/80 border-amber-800",
+        btnColor: "bg-amber-600 text-white",
+        desc: "Hemodinámica de las 4 cavidades cardíacas, aparato valvular y ramas del cayado aórtico.",
+        structures: [
+          {
+            name: "Cayado Aórtico y Ramas Cardinales",
+            type: "Grandes Vasos",
+            origin_insertion: "Ventrículo izquierdo -> Mediastino superior.",
+            innervation: "Nervio Vago (X Par) barorreceptores.",
+            action: "Eyección sistémica hacia cuello, cabeza y extremidades superiores.",
+            clinical_pearl: "Ramas: 1. Tronco braquiocefálico, 2. Carótida común izq, 3. Subclavia izq."
+          },
+          {
+            name: "Ventrículo Izquierdo & Válvula Aórtica",
+            type: "Cavidad Cardíaca",
+            origin_insertion: "Pared miocárdica de 10-15 mm de grosor.",
+            innervation: "Haz de His y red de Purkinje.",
+            action: "Generación de la presión sistólica para perfusión de la circulación mayor.",
+            clinical_pearl: "La estenosis aórtica genera sobrecarga de presión y soplo mesosistólico irradiado a cuello."
+          }
+        ]
+      },
+      spine: {
+        title: "Columna Vertebral & Canal Raquídeo",
+        badge: "Sistema Esquelético Axial",
+        badgeColor: "text-cyan-400 bg-cyan-950/80 border-cyan-800",
+        btnColor: "bg-cyan-600 text-white",
+        desc: "Soporte mecánico axial, cono medular y articulación atlantoaxoidea.",
+        structures: [
+          {
+            name: "Articulación Atlantoaxoidea (C1-C2)",
+            type: "Columna Cervical",
+            origin_insertion: "Atlas y Axis con ligamento transverso.",
+            innervation: "Nervio suboccipital (C1).",
+            action: "50% de la rotación cefálica total del cuello.",
+            clinical_pearl: "Ruptura del ligamento transverso produce compresión bulbar mortal."
+          },
+          {
+            name: "Discos Intervertebrales & Cono Medular",
+            type: "Raquis Lumbar",
+            origin_insertion: "Anillo fibroso y núcleo pulposo (L1-S1).",
+            innervation: "Nervio sinuvertebral.",
+            action: "Amortiguación de cargas. El cono medular finaliza en L1-L2.",
+            clinical_pearl: "Las punciones lumbares se realizan en L3-L4 o L4-L5 para no lesionar la médula."
+          }
+        ]
+      },
+      skull: {
+        title: "Cráneo & Forámenes de la Base Ósea",
+        badge: "Osteología / Neurocráneo",
+        badgeColor: "text-purple-400 bg-purple-950/80 border-purple-800",
+        btnColor: "bg-purple-600 text-white",
+        desc: "Base ósea craneal con forámenes de paso para pares craneales y pedículos vasculares.",
+        structures: [
+          {
+            name: "Foramen Magno (Hueso Occipital)",
+            type: "Fosa Posterior",
+            origin_insertion: "Hueso occipital basal.",
+            innervation: "Transición bulbo-medular hacia la médula.",
+            action: "Paso de bulbo raquídeo, arterias vertebrales y nervio espinal accesorio (XI).",
+            clinical_pearl: "Enclavamiento amigdalino en hipertensión endocraneana severa."
+          },
+          {
+            name: "Silla Turca (Hueso Esfenoides)",
+            type: "Fosa Media",
+            origin_insertion: "Cuerpo del esfenoides.",
+            innervation: "Relación superior con el quiasma óptico.",
+            action: "Aloja y protege a la glándula hipófisis.",
+            clinical_pearl: "Adenomas hipofisarios causan hemianopsia bitemporal por compresión quiasmática."
+          }
+        ]
+      }
+    };
+
+    let currentStructureIndex = 0;
+
+    function initNativeThreeAtlas() {
+      const container = document.getElementById('atlas-canvas-container');
+      if (!container || threeRenderer) return;
+
+      const width = container.clientWidth || 600;
+      const height = container.clientHeight || 500;
+
+      threeScene = new THREE.Scene();
+      threeScene.background = new THREE.Color(0x020617); // Slate 950
+
+      threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      threeCamera.position.set(0, 0, 15);
+
+      threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      threeRenderer.setSize(width, height);
+      threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(threeRenderer.domElement);
+
+      threeControls = new THREE.OrbitControls(threeCamera, threeRenderer.domElement);
+      threeControls.enableDamping = true;
+      threeControls.dampingFactor = 0.05;
+      threeControls.maxDistance = 30;
+      threeControls.minDistance = 3;
+
+      // Luces anatómicas
+      const ambLight = new THREE.AmbientLight(0xffffff, 0.85);
+      threeScene.add(ambLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0x6366f1, 1.2); // Luz azul-indigo de contorno
+      dirLight1.position.set(10, 15, 10);
+      threeScene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0xf43f5e, 0.9); // Luz rosa cálida
+      dirLight2.position.set(-10, -10, -10);
+      threeScene.add(dirLight2);
+
+      build3DAnatomicalModel(activeModelKey);
+
+      document.getElementById('canvas-loading').classList.add('hidden');
+
+      function animate() {
+        requestAnimationFrame(animate);
+        if (isAutoRotating && currentAnatomyMeshGroup) {
+          currentAnatomyMeshGroup.rotation.y += 0.008;
+        }
+        threeControls.update();
+        threeRenderer.render(threeScene, threeCamera);
+      }
+      animate();
+
+      window.addEventListener('resize', () => {
+        if (!container || !threeRenderer) return;
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        threeCamera.aspect = w / h;
+        threeCamera.updateProjectionMatrix();
+        threeRenderer.setSize(w, h);
+      });
+    }
+
+    function build3DAnatomicalModel(key) {
+      if (currentAnatomyMeshGroup) {
+        threeScene.remove(currentAnatomyMeshGroup);
+      }
+
+      currentAnatomyMeshGroup = new THREE.Group();
+
+      if (key === 'muscles') {
+        // Modelo 3D Muscular Écorché con planos y fascículos
+        const torsoMat = new THREE.MeshStandardMaterial({ color: 0xbe123c, roughness: 0.4, metalness: 0.2 });
+        const deltoidMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.3 });
+        const tendonMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.6 });
+
+        // Tronco / Pectorales
+        const torso = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 1.5, 5, 32), torsoMat);
+        currentAnatomyMeshGroup.add(torso);
+
+        // Hombros / Manguito Rotador & Deltoides
+        const shoulderR = new THREE.Mesh(new THREE.SphereGeometry(1.2, 24, 24), deltoidMat);
+        shoulderR.position.set(2.8, 1.8, 0);
+        currentAnatomyMeshGroup.add(shoulderR);
+
+        const shoulderL = new THREE.Mesh(new THREE.SphereGeometry(1.2, 24, 24), deltoidMat);
+        shoulderL.position.set(-2.8, 1.8, 0);
+        currentAnatomyMeshGroup.add(shoulderL);
+
+        // Brazos musculares
+        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.6, 4, 24), torsoMat);
+        armR.position.set(3, -0.5, 0);
+        currentAnatomyMeshGroup.add(armR);
+
+        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.6, 4, 24), torsoMat);
+        armL.position.set(-3, -0.5, 0);
+        currentAnatomyMeshGroup.add(armL);
+
+        // Clavículas / Tendones
+        const clavicle = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 5.5, 16), tendonMat);
+        clavicle.rotation.z = Math.PI / 2;
+        clavicle.position.set(0, 2.5, 0.3);
+        currentAnatomyMeshGroup.add(clavicle);
+
+      } else if (key === 'neuro') {
+        // Encéfalo, Tronco Encefálico y Vías
+        const brainMat = new THREE.MeshStandardMaterial({ color: 0x818cf8, roughness: 0.3, metalness: 0.1 });
+        const stemMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.4 });
+        const tractMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.2 });
+
+        // Hemisferio Derecho e Izquierdo
+        const hemiR = new THREE.Mesh(new THREE.SphereGeometry(2.1, 32, 32), brainMat);
+        hemiR.scale.set(1, 0.85, 1.25);
+        hemiR.position.set(1.1, 1.5, 0);
+        currentAnatomyMeshGroup.add(hemiR);
+
+        const hemiL = new THREE.Mesh(new THREE.SphereGeometry(2.1, 32, 32), brainMat);
+        hemiL.scale.set(1, 0.85, 1.25);
+        hemiL.position.set(-1.1, 1.5, 0);
+        currentAnatomyMeshGroup.add(hemiL);
+
+        // Tronco Encefálico (Mesencéfalo, Puente, Bulbo)
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.6, 4, 24), stemMat);
+        stem.position.set(0, -1.2, -0.2);
+        currentAnatomyMeshGroup.add(stem);
+
+        // Decusación Piramidal (Cruce de tractos)
+        const decussation = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.2, 16, 32), tractMat);
+        decussation.rotation.x = Math.PI / 2;
+        decussation.position.set(0, -2.8, -0.2);
+        currentAnatomyMeshGroup.add(decussation);
+
+      } else if (key === 'cardio') {
+        // Corazón & Grandes Vasos
+        const heartMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.35 });
+        const aortaMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.3 });
+        const veinMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.3 });
+
+        // Ventrículos & Aurículas
+        const heartBody = new THREE.Mesh(new THREE.SphereGeometry(2.2, 32, 32), heartMat);
+        heartBody.scale.set(1, 1.2, 0.9);
+        heartBody.position.set(0, -0.5, 0);
+        currentAnatomyMeshGroup.add(heartBody);
+
+        // Cayado Aórtico (Torus arqueado)
+        const aorticArch = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.4, 16, 32, Math.PI), aortaMat);
+        aorticArch.position.set(0, 1.4, 0);
+        currentAnatomyMeshGroup.add(aorticArch);
+
+        // Ramas Aórticas (Tronco braquiocefálico, Carótida, Subclavia)
+        for (let i = -0.7; i <= 0.7; i += 0.7) {
+          const branch = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.2, 16), aortaMat);
+          branch.position.set(i, 2.6, 0);
+          currentAnatomyMeshGroup.add(branch);
+        }
+
+        // Vena Cava
+        const venaCava = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 4, 16), veinMat);
+        venaCava.position.set(-1.8, 0.5, -0.4);
+        currentAnatomyMeshGroup.add(venaCava);
+
+      } else if (key === 'spine') {
+        // Columna Vertebral & Canal Medular
+        const boneMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.6 });
+        const discMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3 });
+        const cordMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.2 });
+
+        // Médula Espinal Central
+        const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 9, 16), cordMat);
+        cord.position.set(0, 0, 0);
+        currentAnatomyMeshGroup.add(cord);
+
+        // Vértebras y Discos superpuestos
+        for (let y = -4; y <= 4; y += 1.1) {
+          const vertebra = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.6, 24), boneMat);
+          vertebra.position.set(0, y, 0);
+          currentAnatomyMeshGroup.add(vertebra);
+
+          const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 0.25, 24), discMat);
+          disc.position.set(0, y + 0.45, 0);
+          currentAnatomyMeshGroup.add(disc);
+        }
+
+      } else if (key === 'skull') {
+        // Cráneo & Base Ósea
+        const skullMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.5 });
+        const foramenMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 });
+
+        // Calota / Neurocráneo
+        const calota = new THREE.Mesh(new THREE.SphereGeometry(2.3, 32, 32), skullMat);
+        calota.scale.set(1, 1.1, 1.2);
+        calota.position.set(0, 1, 0);
+        currentAnatomyMeshGroup.add(calota);
+
+        // Viscerocráneo / Maxilar
+        const maxilla = new THREE.Mesh(new THREE.BoxGeometry(2, 1.8, 1.8), skullMat);
+        maxilla.position.set(0, -1, 0.7);
+        currentAnatomyMeshGroup.add(maxilla);
+
+        // Órbitas Oculares
+        const orbitR = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), foramenMat);
+        orbitR.position.set(0.7, -0.3, 1.6);
+        currentAnatomyMeshGroup.add(orbitR);
+
+        const orbitL = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), foramenMat);
+        orbitL.position.set(-0.7, -0.3, 1.6);
+        currentAnatomyMeshGroup.add(orbitL);
+      }
+
+      threeScene.add(currentAnatomyMeshGroup);
+    }
+
+    function setNativeAnatomyModel(key) {
+      activeModelKey = key;
+      currentStructureIndex = 0;
+
+      document.querySelectorAll('[id^="btn-cat-"]').forEach(btn => {
+        btn.className = 'px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+      });
+
+      const data = nativeAnatomyDB[key];
+      document.getElementById(`btn-cat-${key}`).className = `px-3 py-1.5 rounded-xl font-bold ${data.btnColor} transition shadow flex items-center gap-1.5`;
+
+      document.getElementById('layer-badge').textContent = data.badge;
+      document.getElementById('layer-badge').className = `text-xs font-bold uppercase tracking-wider ${data.badgeColor} px-3 py-1 rounded-full border`;
+      document.getElementById('layer-title').textContent = data.title;
+      document.getElementById('layer-desc').textContent = data.desc;
+      document.getElementById('layer-structure-count').textContent = `${data.structures.length} estructuras`;
+
+      build3DAnatomicalModel(key);
+      renderSubStructureChips();
+      renderStructureDetail();
+    }
+
+    function renderSubStructureChips() {
+      const container = document.getElementById('sub-structure-chips');
+      const structures = nativeAnatomyDB[activeModelKey].structures;
+
+      container.innerHTML = structures.map((st, idx) => `
+        <button onclick="selectSubStructure(${idx})" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition ${idx === currentStructureIndex ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'}">
+          ${st.name}
+        </button>
+      `).join('');
+    }
+
+    function selectSubStructure(idx) {
+      currentStructureIndex = idx;
+      renderSubStructureChips();
+      renderStructureDetail();
+    }
+
+    function renderStructureDetail() {
+      const st = nativeAnatomyDB[activeModelKey].structures[currentStructureIndex];
+      const box = document.getElementById('structure-detail-box');
+
+      box.innerHTML = `
+        <div class="border-b border-slate-800 pb-2">
+          <span class="text-[10px] font-bold uppercase text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-900">${st.type}</span>
+          <h4 class="text-sm font-bold text-white mt-1">${st.name}</h4>
+        </div>
+        <div class="space-y-1.5 text-slate-300">
+          <p><strong><i class="fa-solid fa-arrows-split-up-and-left text-indigo-400"></i> Origen / Inserción:</strong> ${st.origin_insertion}</p>
+          <p><strong><i class="fa-solid fa-bolt text-amber-400"></i> Inervación:</strong> ${st.innervation}</p>
+          <p><strong><i class="fa-solid fa-gear text-emerald-400"></i> Acción:</strong> ${st.action}</p>
+          <div class="mt-2 p-2 bg-rose-950/30 border border-rose-900/40 rounded-lg text-rose-200">
+            <strong class="text-rose-400 block mb-0.5"><i class="fa-solid fa-stethoscope"></i> Relevancia Clínica / Examen Oral:</strong>
+            ${st.clinical_pearl}
+          </div>
+        </div>
+      `;
+    }
+
+    function reset3DCamera() {
+      if (threeCamera && threeControls) {
+        threeCamera.position.set(0, 0, 15);
+        threeControls.target.set(0, 0, 0);
+        if (currentAnatomyMeshGroup) currentAnatomyMeshGroup.rotation.set(0, 0, 0);
+      }
+    }
+
+    function toggleAutoRotate() {
+      isAutoRotating = !isAutoRotating;
+      const btn = document.getElementById('btn-auto-rot');
+      btn.className = isAutoRotating 
+        ? 'text-indigo-300 px-2 py-1 rounded bg-indigo-950/80 border border-indigo-700 text-[11px] font-semibold flex items-center gap-1'
+        : 'text-slate-300 hover:text-white px-2 py-1 rounded bg-slate-800 text-[11px] font-semibold flex items-center gap-1';
+    }
+
+    function adjustDissectionLayer(val) {
+      const lbl = document.getElementById('slider-label');
+      if (val < 30) lbl.textContent = 'Superficial';
+      else if (val < 70) lbl.textContent = 'Medio';
+      else lbl.textContent = 'Profundo / Óseo';
+
+      if (currentAnatomyMeshGroup) {
+        const opacity = val / 100;
+        currentAnatomyMeshGroup.traverse(child => {
+          if (child.isMesh && child.material) {
+            child.material.transparent = true;
+            child.material.opacity = Math.max(0.35, opacity);
+          }
+        });
+      }
+    }
+
+    function switchAtlasViewerMode(mode) {
+      const nativeBox = document.getElementById('atlas-canvas-container');
+      const cadavBox = document.getElementById('atlas-iframe-container');
+      const btnNative = document.getElementById('btn-mode-native');
+      const btnCadav = document.getElementById('btn-mode-cadav');
+
+      if (mode === 'native') {
+        nativeBox.classList.remove('hidden');
+        cadavBox.classList.add('hidden');
+        btnNative.className = 'px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white transition shadow flex items-center gap-1.5';
+        btnCadav.className = 'px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+      } else {
+        nativeBox.classList.add('hidden');
+        cadavBox.classList.remove('hidden');
+        btnCadav.className = 'px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white transition shadow flex items-center gap-1.5';
+        btnNative.className = 'px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5';
+
+        const iframe = document.getElementById('anatomy-iframe-viewer');
+        if (!iframe.src || iframe.src === 'about:blank') {
+          iframe.src = "https://sketchfab.com/models/75cc6aa94b5c4ed88f9810770d614ac1/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0";
+        }
+      }
+    }
+
+    function sendCurrentStructureToFlashcards() {
+      const st = nativeAnatomyDB[activeModelKey].structures[currentStructureIndex];
+      flashcards.push({
+        id: Date.now(),
+        tag: st.type,
+        front: `¿Cuál es la inervación, acción y relevancia clínica de ${st.name}?`,
+        back: `• Inervación: ${st.innervation}
+• Acción: ${st.action}
+• Clínica: ${st.clinical_pearl}`
+      });
+      saveData('flashcards');
+      switchTab('flashcards');
+      currentCardIndex = flashcards.length - 1;
+      renderFlashcards();
+    }
+
+    // ==========================================
+    // --- RECONOCIMIENTO DE VOZ & EVALUADOR IA --
+    // ==========================================
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRec();
@@ -774,7 +1287,6 @@ Evalúa en máximo 4 párrafos concisos:
       document.getElementById('res-dose-ml').textContent = `${res} ml`;
     }
 
-    // --- FORMATO VANCOUVER ---
     function formatVancouver() {
       const author = document.getElementById('vancouver-author').value.trim() || 'Guyton AC, Hall JE';
       const title = document.getElementById('vancouver-title').value.trim() || 'Tratado de Fisiología Médica';
@@ -785,16 +1297,10 @@ Evalúa en máximo 4 párrafos concisos:
       document.getElementById('vancouver-output').textContent = formatted;
     }
 
-    // --- PAE CON IA ---
     async function generateAIPAEPlan() {
       const vignette = document.getElementById('case-vignette').textContent;
-      const prompt = `A partir de esta viñeta clínica: "${vignette}", formula un plan de Proceso de Atención de Enfermería (PAE) estructurado en formato JSON:
-{
-  "assessment": "Datos subjetivos y objetivos...",
-  "nanda": "[Código] Diagnóstico NANDA relacionado con... evidenciado por...",
-  "noc": "[Código] Criterio NOC con indicador medible...",
-  "nic": "[Código] Intervenciones NIC y fundamentación científica..."
-}`;
+      const prompt = `A partir de esta viñeta: "${vignette}", genera un PAE en formato JSON:
+{"assessment":"...","nanda":"...","noc":"...","nic":"..."}`;
       const btn = document.getElementById('btn-gen-pae');
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando PAE...';
 
@@ -815,11 +1321,10 @@ Evalúa en máximo 4 párrafos concisos:
       }
     }
 
-    // --- AUDIO REPASO MANOS LIBRES (TEXT-TO-SPEECH) ---
     let isAudioStudyActive = false;
     function toggleAudioStudyMode() {
       if (!('speechSynthesis' in window)) {
-        alert('Síntesis de voz no disponible en este navegador.');
+        alert('Síntesis de voz no disponible.');
         return;
       }
 
@@ -873,7 +1378,7 @@ Evalúa en máximo 4 párrafos concisos:
       loadedPdfMimeType = file.type || 'application/pdf';
 
       document.getElementById('pdf-file-name').textContent = file.name;
-      document.getElementById('pdf-status-badge').textContent = `Activo: ${file.name.substring(0, 20)}...`;
+      document.getElementById('pdf-status-badge').textContent = `Activo: ${file.name.substring(0, 18)}...`;
       document.getElementById('pdf-status-badge').className = 'text-[10px] font-bold uppercase bg-emerald-950 text-emerald-400 border border-emerald-800 px-2.5 py-1 rounded-full';
 
       const reader = new FileReader();
@@ -998,194 +1503,6 @@ Evalúa en máximo 4 párrafos concisos:
       } catch (err) {
         appendChatMessage('ai', 'Error: ' + err.message);
       }
-    }
-
-    // --- BASE DE DATOS DE CAPAS ANATÓMICAS 3D ---
-    const anatomyLayersData = {
-      muscles_full: {
-        badge: "Plano Muscular (Miología)",
-        badgeColor: "text-rose-400 bg-rose-950/80 border-rose-800",
-        btnActiveColor: "bg-rose-600 text-white",
-        title: "Músculos Superficiales y Profundos",
-        desc: "Disección tridimensional de los grupos musculares con inserciones, inervación periférica y función.",
-        embedUrl: "https://sketchfab.com/models/75cc6aa94b5c4ed88f9810770d614ac1/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
-        structures: [
-          {
-            id: "rotator_cuff",
-            name: "Manguito Rotador (SIRS)",
-            type: "Músculos del Hombro",
-            origin_insertion: "Fosa supraespinosa, infraespinosa, borde lateral escapular y fosa subescapular -> Húmero.",
-            innervation: "N. Supraescapular, Axilar y Subescapular.",
-            action: "Abducción inicial (0-15°), rotación externa e interna.",
-            clinical_pearl: "Signo de Neer y Hawkins positivo en tendinitis del supraespinoso."
-          }
-        ]
-      },
-      neuro_brain: {
-        badge: "Sistema Nervioso Central",
-        badgeColor: "text-indigo-400 bg-indigo-950/80 border-indigo-800",
-        btnActiveColor: "bg-indigo-600 text-white",
-        title: "Encéfalo y Pares Craneales",
-        desc: "Centros superiores de integración motora, sensitiva y vías descendentes.",
-        embedUrl: "https://sketchfab.com/models/4d8f89b9e6734005ba3cbff56e30b805/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
-        structures: [
-          {
-            id: "motor_cortex",
-            name: "Corteza Motora Primaria (Área 4 Brodmann)",
-            type: "Telencéfalo",
-            origin_insertion: "Giro precentral del lóbulo frontal.",
-            innervation: "Arteria Cerebral Media y Anterior.",
-            action: "Homúnculo Motor de Penfield y vía corticoespinal.",
-            clinical_pearl: "ACV de cerebral media causa hemiplejía faciobraquial contralateral."
-          }
-        ]
-      },
-      cardio_visceral: {
-        badge: "Sistema Cardiovascular",
-        badgeColor: "text-amber-400 bg-amber-950/80 border-amber-800",
-        btnActiveColor: "bg-amber-600 text-white",
-        title: "Corazón & Grandes Vasos",
-        desc: "Hemodinámica cardiovascular y aparato valvular.",
-        embedUrl: "https://sketchfab.com/models/f527bf19f8ba499fb4c759535798939c/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
-        structures: [
-          {
-            id: "aortic_arch",
-            name: "Cayado Aórtico",
-            type: "Grandes Vasos",
-            origin_insertion: "Salida del ventrículo izquierdo.",
-            innervation: "Nervio Vago (X Par).",
-            action: "Distribución del gasto cardíaco sistémico.",
-            clinical_pearl: "Ramas: Tronco braquiocefálico, Carótida común izq, Subclavia izq."
-          }
-        ]
-      },
-      skeletal_spine: {
-        badge: "Sistema Esquelético Axial",
-        badgeColor: "text-cyan-400 bg-cyan-950/80 border-cyan-800",
-        btnActiveColor: "bg-cyan-600 text-white",
-        title: "Columna & Canal Raquídeo",
-        desc: "Soporte mecánico axial y forámenes de emergencia neural.",
-        embedUrl: "https://sketchfab.com/models/285d89ce199b4566aa10bbcfb826dc6a/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
-        structures: [
-          {
-            id: "atlas_axis",
-            name: "Articulación Atlantoaxoidea (C1-C2)",
-            type: "Columna Cervical",
-            origin_insertion: "Atlas y Axis con ligamento transverso.",
-            innervation: "N. suboccipital.",
-            action: "50% de la rotación cefálica total.",
-            clinical_pearl: "Ruptura del ligamento transverso causa compresión bulbar mortal."
-          }
-        ]
-      },
-      skull_base: {
-        badge: "Osteología / Neurocráneo",
-        badgeColor: "text-purple-400 bg-purple-950/80 border-purple-800",
-        btnActiveColor: "bg-purple-600 text-white",
-        title: "Cráneo & Forámenes de la Base",
-        desc: "Base ósea craneal y hendiduras de paso neurovascular.",
-        embedUrl: "https://sketchfab.com/models/1cb05f1373e34bcf9fbf546a3629fba1/embed?autostart=1&ui_controls=1&ui_infos=0&ui_watermark=0&ui_annotations=1",
-        structures: [
-          {
-            id: "foramen_magnum",
-            name: "Foramen Magno",
-            type: "Fosa Posterior",
-            origin_insertion: "Hueso occipital.",
-            innervation: "Transición bulbo-medular.",
-            action: "Paso de bulbo y arterias vertebrales.",
-            clinical_pearl: "Enclavamiento amigdalino en hipertensión endocraneana."
-          }
-        ]
-      }
-    };
-
-    let currentLayerKey = 'muscles_full';
-    let currentStructureIndex = 0;
-
-    function setAnatomyLayer(layerKey) {
-      currentLayerKey = layerKey;
-      currentStructureIndex = 0;
-
-      document.querySelectorAll('[id^="btn-layer-"]').forEach(btn => {
-        btn.className = 'px-3 py-1.5 rounded-xl font-bold text-slate-400 hover:text-white transition flex items-center gap-1.5';
-      });
-
-      const layerData = anatomyLayersData[layerKey];
-      document.getElementById(`btn-layer-${layerKey}`).className = `px-3 py-1.5 rounded-xl font-bold ${layerData.btnActiveColor} transition shadow flex items-center gap-1.5`;
-
-      const iframe = document.getElementById('anatomy-iframe-viewer');
-      if (iframe) iframe.src = layerData.embedUrl;
-
-      document.getElementById('layer-badge').textContent = layerData.badge;
-      document.getElementById('layer-badge').className = `text-xs font-bold uppercase tracking-wider ${layerData.badgeColor} px-3 py-1 rounded-full border`;
-      document.getElementById('layer-title').textContent = layerData.title;
-      document.getElementById('layer-desc').textContent = layerData.desc;
-
-      renderSubStructureChips();
-      renderStructureDetail();
-    }
-
-    function renderSubStructureChips() {
-      const container = document.getElementById('sub-structure-chips');
-      const structures = anatomyLayersData[currentLayerKey].structures;
-
-      container.innerHTML = structures.map((st, idx) => `
-        <button onclick="selectSubStructure(${idx})" id="chip-st-${idx}" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition ${idx === currentStructureIndex ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-white border border-slate-700'}">
-          ${st.name}
-        </button>
-      `).join('');
-    }
-
-    function selectSubStructure(idx) {
-      currentStructureIndex = idx;
-      renderSubStructureChips();
-      renderStructureDetail();
-    }
-
-    function renderStructureDetail() {
-      const st = anatomyLayersData[currentLayerKey].structures[currentStructureIndex];
-      const box = document.getElementById('structure-detail-box');
-
-      box.innerHTML = `
-        <div class="border-b border-slate-800 pb-2">
-          <span class="text-[10px] font-bold uppercase text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-900">${st.type}</span>
-          <h4 class="text-sm font-bold text-white mt-1">${st.name}</h4>
-        </div>
-        <div class="space-y-1 text-slate-300">
-          <p><strong>Origen/Inserción:</strong> ${st.origin_insertion}</p>
-          <p><strong>Inervación:</strong> ${st.innervation}</p>
-          <p><strong>Acción:</strong> ${st.action}</p>
-          <div class="mt-2 p-2 bg-rose-950/30 border border-rose-900/40 rounded-lg text-rose-200">
-            <strong class="text-rose-400 block mb-0.5">Correlación Clínica:</strong>
-            ${st.clinical_pearl}
-          </div>
-        </div>
-      `;
-    }
-
-    function reload3DViewer() {
-      const iframe = document.getElementById('anatomy-iframe-viewer');
-      if (iframe) {
-        const src = iframe.src;
-        iframe.src = '';
-        setTimeout(() => { iframe.src = src; }, 100);
-      }
-    }
-
-    function sendCurrentStructureToFlashcards() {
-      const st = anatomyLayersData[currentLayerKey].structures[currentStructureIndex];
-      flashcards.push({
-        id: Date.now(),
-        tag: st.type,
-        front: `¿Cuál es la inervación, acción y relevancia clínica de ${st.name}?`,
-        back: `• Inervación: ${st.innervation}
-• Acción: ${st.action}
-• Clínica: ${st.clinical_pearl}`
-      });
-      saveData('flashcards');
-      switchTab('flashcards');
-      currentCardIndex = flashcards.length - 1;
-      renderFlashcards();
     }
 
     // --- GESTIÓN DE DATOS & SUPABASE ---
@@ -1395,7 +1712,7 @@ Evalúa en máximo 4 párrafos concisos:
       if (recognition) recognition.stop();
       oralTimerSeconds = 90;
       updateOralTimerDisplay();
-      document.getElementById('oral-transcript-text').textContent = 'Presiona "Iniciar Respuesta por Voz" para comenzar a responder...';
+      document.getElementById('oral-transcript-text').textContent = 'Presiona "Iniciar Respuesta por Voz" para comenzar...';
     }
 
     // --- FLASHCARDS ---
@@ -1511,7 +1828,7 @@ Evalúa en máximo 4 párrafos concisos:
 
     // --- NAVEGACIÓN ---
     function switchTab(tab) {
-      ['notebook', 'atlas', 'cases', 'pae', 'calc', 'diagrams', 'flashcards', 'timer'].forEach(t => {
+      ['atlas', 'notebook', 'cases', 'pae', 'calc', 'diagrams', 'flashcards', 'timer'].forEach(t => {
         const el = document.getElementById(`view-${t}`);
         if (el) el.classList.add('hidden');
       });
@@ -1524,13 +1841,16 @@ Evalúa en máximo 4 párrafos concisos:
       const activeNav = document.getElementById(`nav-${tab}`);
       if (activeNav) activeNav.className = 'tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap';
 
-      if (tab === 'flashcards') renderFlashcards();
+      if (tab === 'atlas') {
+        setTimeout(initNativeThreeAtlas, 50);
+      } else if (tab === 'flashcards') renderFlashcards();
       else if (tab === 'cases') renderCurrentCase();
       else if (tab === 'calc') { calculateDripRate(); calculateDose(); }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      setAnatomyLayer('muscles_full');
+      initNativeThreeAtlas();
+      setNativeAnatomyModel('muscles');
       renderCurrentCase();
       updateTimerDisplay();
       updateOralTimerDisplay();
