@@ -694,11 +694,41 @@
 
     <!-- ==================== 4.6 VALORES DE LABORATORIO ==================== -->
     <section id="view-labs" class="hidden space-y-6">
-      <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
-        <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-vial text-lime-400"></i> Valores de Laboratorio Normales (Adulto)
-        </h2>
-        <p class="text-xs md:text-sm text-slate-400">Referencia rápida. Los rangos pueden variar levemente entre laboratorios.</p>
+      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-vial text-lime-400"></i> Valores de Laboratorio Normales
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400">Referencia rápida. Los rangos pediátricos son generales y varían según la edad exacta y el laboratorio.</p>
+        </div>
+        <div class="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 gap-1 text-xs">
+          <button onclick="setLabPopulation('adult')" id="btn-lab-adult" class="px-3 py-1.5 rounded-lg font-bold bg-lime-600 text-white transition">
+            Adulto
+          </button>
+          <button onclick="setLabPopulation('pediatric')" id="btn-lab-pediatric" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition">
+            Pediátrico
+          </button>
+        </div>
+      </div>
+
+      <!-- Verificador de Valores -->
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-clipboard-check text-lime-400"></i> Verificar un Valor
+        </h3>
+        <div class="grid sm:grid-cols-3 gap-3 items-end">
+          <div class="sm:col-span-1">
+            <label class="text-[11px] text-slate-400 block mb-1">Prueba:</label>
+            <select id="lab-checker-test" onchange="checkLabValue()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-lime-500"></select>
+          </div>
+          <div class="sm:col-span-1">
+            <label class="text-[11px] text-slate-400 block mb-1">Resultado del paciente:</label>
+            <input type="number" step="any" id="lab-checker-value" oninput="checkLabValue()" placeholder="Ej: 10.2" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-lime-500">
+          </div>
+          <div id="lab-checker-result" class="sm:col-span-1 p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-center">
+            <p class="text-xs text-slate-500">Ingresa un valor</p>
+          </div>
+        </div>
       </div>
 
       <input type="text" id="lab-search-input" oninput="filterLabTable()" placeholder="Buscar valor (ej: sodio, hemoglobina)..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
@@ -2175,43 +2205,107 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     // --- VALORES DE LABORATORIO ---
-    const labValuesDB = [
-      { name: 'Hemoglobina (Hombre)', value: '13.5 - 17.5', unit: 'g/dL' },
-      { name: 'Hemoglobina (Mujer)', value: '12.0 - 15.5', unit: 'g/dL' },
-      { name: 'Hematocrito (Hombre)', value: '38.8 - 50.0', unit: '%' },
-      { name: 'Hematocrito (Mujer)', value: '34.9 - 44.5', unit: '%' },
-      { name: 'Leucocitos', value: '4,500 - 11,000', unit: '/mm³' },
-      { name: 'Plaquetas', value: '150,000 - 450,000', unit: '/mm³' },
-      { name: 'Glicemia en ayunas', value: '70 - 100', unit: 'mg/dL' },
-      { name: 'Sodio (Na+)', value: '135 - 145', unit: 'mEq/L' },
-      { name: 'Potasio (K+)', value: '3.5 - 5.0', unit: 'mEq/L' },
-      { name: 'Cloro (Cl-)', value: '96 - 106', unit: 'mEq/L' },
-      { name: 'Calcio total', value: '8.5 - 10.5', unit: 'mg/dL' },
-      { name: 'Creatinina (Hombre)', value: '0.7 - 1.3', unit: 'mg/dL' },
-      { name: 'Creatinina (Mujer)', value: '0.6 - 1.1', unit: 'mg/dL' },
-      { name: 'BUN (Nitrógeno ureico)', value: '7 - 20', unit: 'mg/dL' },
-      { name: 'INR', value: '0.8 - 1.1', unit: 'ratio' },
-      { name: 'Tiempo de Protrombina (PT)', value: '11 - 13.5', unit: 'seg' },
-      { name: 'PTT', value: '25 - 35', unit: 'seg' },
-      { name: 'Colesterol Total', value: '< 200', unit: 'mg/dL' },
-      { name: 'Triglicéridos', value: '< 150', unit: 'mg/dL' },
-      { name: 'Saturación de Oxígeno (SpO2)', value: '95 - 100', unit: '%' },
-      { name: 'Frecuencia Cardíaca (Adulto)', value: '60 - 100', unit: 'lpm' },
-      { name: 'Frecuencia Respiratoria (Adulto)', value: '12 - 20', unit: 'rpm' },
-      { name: 'Presión Arterial', value: '90/60 - 120/80', unit: 'mmHg' },
-      { name: 'Temperatura Corporal', value: '36.0 - 37.5', unit: '°C' },
-      { name: 'pH Arterial', value: '7.35 - 7.45', unit: '' },
-      { name: 'PaCO2', value: '35 - 45', unit: 'mmHg' },
-      { name: 'PaO2', value: '80 - 100', unit: 'mmHg' },
-      { name: 'Bicarbonato (HCO3-)', value: '22 - 26', unit: 'mEq/L' }
+    const labValuesAdult = [
+      { name: 'Hemoglobina (Hombre)', display: '13.5 - 17.5', unit: 'g/dL', min: 13.5, max: 17.5 },
+      { name: 'Hemoglobina (Mujer)', display: '12.0 - 15.5', unit: 'g/dL', min: 12.0, max: 15.5 },
+      { name: 'Hematocrito (Hombre)', display: '38.8 - 50.0', unit: '%', min: 38.8, max: 50.0 },
+      { name: 'Hematocrito (Mujer)', display: '34.9 - 44.5', unit: '%', min: 34.9, max: 44.5 },
+      { name: 'Leucocitos', display: '4,500 - 11,000', unit: '/mm³', min: 4500, max: 11000 },
+      { name: 'Plaquetas', display: '150,000 - 450,000', unit: '/mm³', min: 150000, max: 450000 },
+      { name: 'Glicemia en ayunas', display: '70 - 100', unit: 'mg/dL', min: 70, max: 100 },
+      { name: 'Sodio (Na+)', display: '135 - 145', unit: 'mEq/L', min: 135, max: 145 },
+      { name: 'Potasio (K+)', display: '3.5 - 5.0', unit: 'mEq/L', min: 3.5, max: 5.0 },
+      { name: 'Cloro (Cl-)', display: '96 - 106', unit: 'mEq/L', min: 96, max: 106 },
+      { name: 'Calcio total', display: '8.5 - 10.5', unit: 'mg/dL', min: 8.5, max: 10.5 },
+      { name: 'Creatinina (Hombre)', display: '0.7 - 1.3', unit: 'mg/dL', min: 0.7, max: 1.3 },
+      { name: 'Creatinina (Mujer)', display: '0.6 - 1.1', unit: 'mg/dL', min: 0.6, max: 1.1 },
+      { name: 'BUN (Nitrógeno ureico)', display: '7 - 20', unit: 'mg/dL', min: 7, max: 20 },
+      { name: 'INR', display: '0.8 - 1.1', unit: 'ratio', min: 0.8, max: 1.1 },
+      { name: 'Tiempo de Protrombina (PT)', display: '11 - 13.5', unit: 'seg', min: 11, max: 13.5 },
+      { name: 'PTT', display: '25 - 35', unit: 'seg', min: 25, max: 35 },
+      { name: 'Colesterol Total', display: '< 200', unit: 'mg/dL', min: 0, max: 200 },
+      { name: 'Triglicéridos', display: '< 150', unit: 'mg/dL', min: 0, max: 150 },
+      { name: 'Saturación de Oxígeno (SpO2)', display: '95 - 100', unit: '%', min: 95, max: 100 },
+      { name: 'Frecuencia Cardíaca', display: '60 - 100', unit: 'lpm', min: 60, max: 100 },
+      { name: 'Frecuencia Respiratoria', display: '12 - 20', unit: 'rpm', min: 12, max: 20 },
+      { name: 'Presión Arterial', display: '90/60 - 120/80', unit: 'mmHg' },
+      { name: 'Temperatura Corporal', display: '36.0 - 37.5', unit: '°C', min: 36.0, max: 37.5 },
+      { name: 'pH Arterial', display: '7.35 - 7.45', unit: '', min: 7.35, max: 7.45 },
+      { name: 'PaCO2', display: '35 - 45', unit: 'mmHg', min: 35, max: 45 },
+      { name: 'PaO2', display: '80 - 100', unit: 'mmHg', min: 80, max: 100 },
+      { name: 'Bicarbonato (HCO3-)', display: '22 - 26', unit: 'mEq/L', min: 22, max: 26 }
     ];
+
+    const labValuesPediatric = [
+      { name: 'Hemoglobina (niño 1-12 años)', display: '11.0 - 16.0', unit: 'g/dL', min: 11.0, max: 16.0 },
+      { name: 'Hemoglobina (recién nacido)', display: '14.0 - 22.0', unit: 'g/dL', min: 14.0, max: 22.0 },
+      { name: 'Hematocrito (niño)', display: '34 - 40', unit: '%', min: 34, max: 40 },
+      { name: 'Leucocitos (niño)', display: '5,000 - 15,000', unit: '/mm³', min: 5000, max: 15000 },
+      { name: 'Plaquetas (niño)', display: '150,000 - 450,000', unit: '/mm³', min: 150000, max: 450000 },
+      { name: 'Glicemia en ayunas (niño)', display: '60 - 100', unit: 'mg/dL', min: 60, max: 100 },
+      { name: 'Sodio (Na+) (niño)', display: '135 - 145', unit: 'mEq/L', min: 135, max: 145 },
+      { name: 'Potasio (K+) (niño)', display: '3.5 - 5.5', unit: 'mEq/L', min: 3.5, max: 5.5 },
+      { name: 'Calcio total (niño)', display: '8.8 - 10.8', unit: 'mg/dL', min: 8.8, max: 10.8 },
+      { name: 'Creatinina (niño)', display: '0.3 - 0.7', unit: 'mg/dL', min: 0.3, max: 0.7 },
+      { name: 'BUN (niño)', display: '5 - 18', unit: 'mg/dL', min: 5, max: 18 },
+      { name: 'Saturación de Oxígeno (SpO2)', display: '95 - 100', unit: '%', min: 95, max: 100 },
+      { name: 'Temperatura Corporal (niño)', display: '36.5 - 37.5', unit: '°C', min: 36.5, max: 37.5 },
+      { name: 'FC Recién Nacido (0-28 días)', display: '100 - 160', unit: 'lpm', min: 100, max: 160 },
+      { name: 'FC Lactante (1-12 meses)', display: '90 - 150', unit: 'lpm', min: 90, max: 150 },
+      { name: 'FC Preescolar (1-5 años)', display: '80 - 140', unit: 'lpm', min: 80, max: 140 },
+      { name: 'FC Escolar (6-12 años)', display: '70 - 120', unit: 'lpm', min: 70, max: 120 },
+      { name: 'FR Recién Nacido (0-28 días)', display: '30 - 60', unit: 'rpm', min: 30, max: 60 },
+      { name: 'FR Lactante (1-12 meses)', display: '30 - 50', unit: 'rpm', min: 30, max: 50 },
+      { name: 'FR Preescolar (1-5 años)', display: '20 - 30', unit: 'rpm', min: 20, max: 30 },
+      { name: 'FR Escolar (6-12 años)', display: '18 - 25', unit: 'rpm', min: 18, max: 25 }
+    ];
+
+    let labPopulation = 'adult';
+
+    function getActiveLabDB() {
+      return labPopulation === 'adult' ? labValuesAdult : labValuesPediatric;
+    }
+
+    function setLabPopulation(pop) {
+      labPopulation = pop;
+      document.getElementById('btn-lab-adult').className = `px-3 py-1.5 rounded-lg font-bold transition ${pop === 'adult' ? 'bg-lime-600 text-white' : 'text-slate-400 hover:text-white'}`;
+      document.getElementById('btn-lab-pediatric').className = `px-3 py-1.5 rounded-lg font-bold transition ${pop === 'pediatric' ? 'bg-lime-600 text-white' : 'text-slate-400 hover:text-white'}`;
+      document.getElementById('lab-search-input').value = '';
+      populateLabChecker();
+      renderLabTable();
+    }
+
+    function populateLabChecker() {
+      const select = document.getElementById('lab-checker-test');
+      const testable = getActiveLabDB().filter(l => l.min !== undefined);
+      select.innerHTML = testable.map(l => `<option value="${l.name}">${l.name}</option>`).join('');
+      document.getElementById('lab-checker-value').value = '';
+      checkLabValue();
+    }
+
+    function checkLabValue() {
+      const testName = document.getElementById('lab-checker-test').value;
+      const rawVal = document.getElementById('lab-checker-value').value;
+      const resultBox = document.getElementById('lab-checker-result');
+      const test = getActiveLabDB().find(l => l.name === testName);
+
+      if (!test || rawVal === '') {
+        resultBox.innerHTML = '<p class="text-xs text-slate-500">Ingresa un valor</p>';
+        return;
+      }
+      const val = parseFloat(rawVal);
+      let status = 'Normal', color = 'text-emerald-400';
+      if (val < test.min) { status = '⬇ Bajo'; color = 'text-cyan-400'; }
+      else if (val > test.max) { status = '⬆ Alto'; color = 'text-rose-400'; }
+      resultBox.innerHTML = `<p class="text-sm font-bold ${color}">${status}</p><p class="text-[10px] text-slate-500">Ref: ${test.display} ${test.unit}</p>`;
+    }
 
     function renderLabTable() {
       const tbody = document.getElementById('lab-values-tbody');
-      tbody.innerHTML = labValuesDB.map(l => `
+      tbody.innerHTML = getActiveLabDB().map(l => `
         <tr class="hover:bg-slate-800/40">
           <td class="px-4 py-2.5 font-medium">${l.name}</td>
-          <td class="px-4 py-2.5 text-emerald-400 font-semibold">${l.value}</td>
+          <td class="px-4 py-2.5 text-emerald-400 font-semibold">${l.display}</td>
           <td class="px-4 py-2.5 text-slate-400">${l.unit}</td>
         </tr>
       `).join('');
@@ -2219,12 +2313,12 @@ Evalúa en máximo 4 párrafos concisos:
 
     function filterLabTable() {
       const q = document.getElementById('lab-search-input').value.trim().toLowerCase();
-      const filtered = labValuesDB.filter(l => l.name.toLowerCase().includes(q));
+      const filtered = getActiveLabDB().filter(l => l.name.toLowerCase().includes(q));
       const tbody = document.getElementById('lab-values-tbody');
       tbody.innerHTML = filtered.map(l => `
         <tr class="hover:bg-slate-800/40">
           <td class="px-4 py-2.5 font-medium">${l.name}</td>
-          <td class="px-4 py-2.5 text-emerald-400 font-semibold">${l.value}</td>
+          <td class="px-4 py-2.5 text-emerald-400 font-semibold">${l.display}</td>
           <td class="px-4 py-2.5 text-slate-400">${l.unit}</td>
         </tr>
       `).join('');
@@ -2244,9 +2338,8 @@ Evalúa en máximo 4 párrafos concisos:
       calculateApgar();
       calculateEva();
       calculateBraden();
+      populateLabChecker();
       renderLabTable();
-
-      // La app arranca bloqueada. Solo se desbloquea si ya hay una sesión activa.
       if (supabaseClient) {
         const { data } = await supabaseClient.auth.getSession();
         if (data && data.session) {
