@@ -43,6 +43,19 @@
 
       <!-- Estado de Autenticación / Nube -->
       <div class="flex items-center gap-2">
+        <select id="semester-selector" onchange="saveCurrentSemester()" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-indigo-500" title="Semestre actual">
+          <option value="1">1er Sem.</option>
+          <option value="2">2do Sem.</option>
+          <option value="3">3er Sem.</option>
+          <option value="4">4to Sem.</option>
+          <option value="5">5to Sem.</option>
+          <option value="6">6to Sem.</option>
+          <option value="7">7mo Sem.</option>
+          <option value="8">8vo Sem.</option>
+        </select>
+        <button onclick="toggleSearchModal(true)" class="w-9 h-9 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl transition" title="Buscar en toda la app">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
         <button onclick="toggleAudioStudyMode()" id="btn-audio-mode" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5" title="Modo Manos Libres con Voz">
           <i class="fa-solid fa-headphones"></i> <span class="hidden sm:inline">Audio Repaso</span>
         </button>
@@ -57,6 +70,10 @@
         <button onclick="switchTab('atlas')" id="nav-atlas" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap">
           <i class="fa-solid fa-person-running text-rose-400"></i>
           <span>Atlas 3D (BioDigital)</span>
+        </button>
+        <button onclick="switchTab('tutor')" id="nav-tutor" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-chalkboard-user text-violet-400"></i>
+          <span>Tutor IA</span>
         </button>
         <button onclick="switchTab('notebook')" id="nav-notebook" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-book-bookmark text-amber-300"></i>
@@ -73,6 +90,14 @@
         <button onclick="switchTab('calc')" id="nav-calc" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-calculator text-cyan-400"></i>
           <span>Dosificación</span>
+        </button>
+        <button onclick="switchTab('scales')" id="nav-scales" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-gauge-high text-fuchsia-400"></i>
+          <span>Escalas Clínicas</span>
+        </button>
+        <button onclick="switchTab('labs')" id="nav-labs" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
+          <i class="fa-solid fa-vial text-lime-400"></i>
+          <span>Valores de Lab</span>
         </button>
         <button onclick="switchTab('diagrams')" id="nav-diagrams" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-diagram-project text-emerald-400"></i>
@@ -200,6 +225,44 @@
             </p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ==================== 0.5 TUTOR IA (Socrático) ==================== -->
+    <section id="view-tutor" class="hidden space-y-6">
+      <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-chalkboard-user text-violet-400"></i> Tutor IA
+          </h2>
+          <p class="text-xs md:text-sm text-slate-400">
+            Conversa sobre cualquier tema de enfermería. El tutor te explica, pero también te pregunta de vuelta — estilo ABP.
+          </p>
+        </div>
+        <div class="flex bg-slate-950/80 p-1 rounded-xl border border-slate-800 gap-1 text-xs">
+          <button onclick="setTutorMode('free')" id="btn-tutor-free" class="px-3 py-1.5 rounded-lg font-bold bg-violet-600 text-white transition">
+            Modo Libre
+          </button>
+          <button onclick="setTutorMode('docs')" id="btn-tutor-docs" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition">
+            Con mis Documentos
+          </button>
+        </div>
+      </div>
+
+      <div class="max-w-3xl mx-auto bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col h-[600px]">
+        <div id="tutor-chat-box" class="flex-1 overflow-y-auto space-y-3 py-3 pr-2 text-xs leading-relaxed text-slate-200">
+          <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-400 space-y-2">
+            <p class="font-semibold text-slate-300">Tutor IA:</p>
+            <p>¡Hola! Soy tu tutor de enfermería. Pregúntame sobre cualquier tema de la carrera — desde fundamentos hasta cuidado crítico — y te iré guiando con preguntas para que razones el caso, no solo memorices la respuesta.</p>
+          </div>
+        </div>
+
+        <form onsubmit="handleTutorMessage(event)" class="flex gap-2 pt-3 border-t border-slate-800">
+          <input type="text" id="tutor-user-input" placeholder="Ej: No entiendo la diferencia entre shock hipovolémico y cardiogénico..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500">
+          <button type="submit" class="bg-violet-600 hover:bg-violet-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition shadow-lg">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
       </div>
     </section>
 
@@ -489,6 +552,167 @@
       </div>
     </section>
 
+    <!-- ==================== 4.5 ESCALAS CLÍNICAS ==================== -->
+    <section id="view-scales" class="hidden space-y-6">
+      <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-gauge-high text-fuchsia-400"></i> Escalas de Valoración Clínica
+        </h2>
+        <p class="text-xs md:text-sm text-slate-400">Las escalas que más vas a usar en toda la carrera, de fundamentos a prácticas clínicas.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-6">
+        <!-- Glasgow -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-brain text-indigo-400"></i> Escala de Glasgow</h3>
+          <div class="grid grid-cols-3 gap-2 text-xs">
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Ocular</label>
+              <select id="glasgow-eye" onchange="calculateGlasgow()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white">
+                <option value="4">4 - Espontánea</option>
+                <option value="3">3 - Al habla</option>
+                <option value="2">2 - Al dolor</option>
+                <option value="1">1 - Ninguna</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Verbal</label>
+              <select id="glasgow-verbal" onchange="calculateGlasgow()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white">
+                <option value="5">5 - Orientado</option>
+                <option value="4">4 - Confuso</option>
+                <option value="3">3 - Inapropiadas</option>
+                <option value="2">2 - Incomprensibles</option>
+                <option value="1">1 - Ninguna</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 block mb-1">Motora</label>
+              <select id="glasgow-motor" onchange="calculateGlasgow()" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white">
+                <option value="6">6 - Obedece</option>
+                <option value="5">5 - Localiza dolor</option>
+                <option value="4">4 - Retira al dolor</option>
+                <option value="3">3 - Flexión anormal</option>
+                <option value="2">2 - Extensión anormal</option>
+                <option value="1">1 - Ninguna</option>
+              </select>
+            </div>
+          </div>
+          <div id="glasgow-result" class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+            <span class="text-2xl font-bold text-white">15</span> <span class="text-xs text-slate-400">/ 15</span>
+            <p class="text-xs text-emerald-400 font-semibold mt-1">Consciencia normal</p>
+          </div>
+        </div>
+
+        <!-- APGAR -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-baby text-pink-400"></i> Escala APGAR</h3>
+          <div class="space-y-2 text-xs">
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Frec. Cardíaca</label>
+              <select id="apgar-fc" onchange="calculateApgar()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="2">2 - >100</option><option value="1">1 - <100</option><option value="0">0 - Ausente</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Esfuerzo Resp.</label>
+              <select id="apgar-re" onchange="calculateApgar()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="2">2 - Llanto fuerte</option><option value="1">1 - Irregular</option><option value="0">0 - Ausente</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Tono Muscular</label>
+              <select id="apgar-tm" onchange="calculateApgar()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="2">2 - Activo</option><option value="1">1 - Cierta flexión</option><option value="0">0 - Flácido</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Irritab. Refleja</label>
+              <select id="apgar-ir" onchange="calculateApgar()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="2">2 - Llanto/tos</option><option value="1">1 - Mueca</option><option value="0">0 - Sin respuesta</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Color</label>
+              <select id="apgar-color" onchange="calculateApgar()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="2">2 - Rosado total</option><option value="1">1 - Acrocianosis</option><option value="0">0 - Cianosis/palidez</option></select>
+            </div>
+          </div>
+          <div id="apgar-result" class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+            <span class="text-2xl font-bold text-white">10</span> <span class="text-xs text-slate-400">/ 10</span>
+            <p class="text-xs text-emerald-400 font-semibold mt-1">Buen estado general</p>
+          </div>
+        </div>
+
+        <!-- EVA Dolor -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-face-dizzy text-amber-400"></i> Escala Visual Análoga (EVA) del Dolor</h3>
+          <input type="range" min="0" max="10" value="0" id="eva-slider" oninput="calculateEva()" class="w-full accent-amber-500">
+          <div id="eva-result" class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+            <span class="text-2xl font-bold text-white">0</span> <span class="text-xs text-slate-400">/ 10</span>
+            <p class="text-xs text-emerald-400 font-semibold mt-1">Sin dolor</p>
+          </div>
+        </div>
+
+        <!-- Braden -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-bed text-cyan-400"></i> Escala de Braden (Úlceras por Presión)</h3>
+          <div class="space-y-2 text-xs">
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Percepción Sensorial</label>
+              <select id="braden-1" onchange="calculateBraden()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="4">4 - Sin limitación</option><option value="3">3 - Ligeramente limitada</option><option value="2">2 - Muy limitada</option><option value="1">1 - Completamente limitada</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Exposición Humedad</label>
+              <select id="braden-2" onchange="calculateBraden()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="4">4 - Raramente húmeda</option><option value="3">3 - Ocasionalmente</option><option value="2">2 - Húmeda a menudo</option><option value="1">1 - Constantemente húmeda</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Actividad</label>
+              <select id="braden-3" onchange="calculateBraden()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="4">4 - Deambula frec.</option><option value="3">3 - Deambula ocas.</option><option value="2">2 - En silla</option><option value="1">1 - Encamado</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Movilidad</label>
+              <select id="braden-4" onchange="calculateBraden()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="4">4 - Sin limitación</option><option value="3">3 - Ligeramente limitada</option><option value="2">2 - Muy limitada</option><option value="1">1 - Inmóvil</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Nutrición</label>
+              <select id="braden-5" onchange="calculateBraden()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="4">4 - Excelente</option><option value="3">3 - Adecuada</option><option value="2">2 - Probablemente inadecuada</option><option value="1">1 - Muy pobre</option></select>
+            </div>
+            <div class="grid grid-cols-2 gap-2 items-center">
+              <label class="text-slate-300">Fricción / Cizalla</label>
+              <select id="braden-6" onchange="calculateBraden()" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"><option value="3">3 - Sin problema</option><option value="2">2 - Problema potencial</option><option value="1">1 - Problema</option></select>
+            </div>
+          </div>
+          <div id="braden-result" class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+            <span class="text-2xl font-bold text-white">23</span> <span class="text-xs text-slate-400">/ 23</span>
+            <p class="text-xs text-emerald-400 font-semibold mt-1">Sin riesgo</p>
+          </div>
+        </div>
+
+        <!-- NYHA (referencia, no calculable) -->
+        <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2 lg:col-span-2">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-heart-circle-check text-rose-400"></i> Clasificación Funcional NYHA (Insuficiencia Cardíaca)</h3>
+          <div class="grid md:grid-cols-2 gap-2 text-xs">
+            <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800"><strong class="text-emerald-400">Clase I:</strong> Sin limitación de actividad física.</div>
+            <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800"><strong class="text-amber-400">Clase II:</strong> Limitación leve, cómodo en reposo.</div>
+            <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800"><strong class="text-orange-400">Clase III:</strong> Limitación marcada, cómodo solo en reposo.</div>
+            <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800"><strong class="text-rose-400">Clase IV:</strong> Síntomas incluso en reposo.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 4.6 VALORES DE LABORATORIO ==================== -->
+    <section id="view-labs" class="hidden space-y-6">
+      <div class="bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+        <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-vial text-lime-400"></i> Valores de Laboratorio Normales (Adulto)
+        </h2>
+        <p class="text-xs md:text-sm text-slate-400">Referencia rápida. Los rangos pueden variar levemente entre laboratorios.</p>
+      </div>
+
+      <input type="text" id="lab-search-input" oninput="filterLabTable()" placeholder="Buscar valor (ej: sodio, hemoglobina)..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+
+      <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px]">
+            <tr><th class="px-4 py-2.5">Prueba</th><th class="px-4 py-2.5">Valor Normal</th><th class="px-4 py-2.5">Unidad</th></tr>
+          </thead>
+          <tbody id="lab-values-tbody" class="divide-y divide-slate-800 text-slate-200"></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- ==================== 5. MAPAS CONCEPTUALES & VANCOUVER ==================== -->
     <section id="view-diagrams" class="hidden space-y-6">
       <div class="grid lg:grid-cols-2 gap-6">
@@ -543,9 +767,22 @@ graph TD
           <h2 class="text-2xl font-bold text-white">Tarjetas de Memoria</h2>
           <p class="text-sm text-slate-400">Recuperación activa y repaso espaciado.</p>
         </div>
-        <button onclick="toggleCardModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
-          <i class="fa-solid fa-plus"></i> Crear Manual
-        </button>
+        <div class="flex items-center gap-2">
+          <select id="flashcard-semester-filter" onchange="renderFlashcards()" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-2 focus:outline-none focus:border-indigo-500">
+            <option value="all">Todos los semestres</option>
+            <option value="1">1er Sem.</option>
+            <option value="2">2do Sem.</option>
+            <option value="3">3er Sem.</option>
+            <option value="4">4to Sem.</option>
+            <option value="5">5to Sem.</option>
+            <option value="6">6to Sem.</option>
+            <option value="7">7mo Sem.</option>
+            <option value="8">8vo Sem.</option>
+          </select>
+          <button onclick="toggleCardModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Crear Manual
+          </button>
+        </div>
       </div>
 
       <div id="flashcard-study-container" class="max-w-xl mx-auto">
@@ -638,6 +875,19 @@ graph TD
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Búsqueda Global -->
+  <div id="search-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[60] flex items-start justify-center p-4 pt-20">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 w-full max-w-lg shadow-2xl space-y-3">
+      <div class="flex justify-between items-center">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-magnifying-glass text-indigo-400"></i> Buscar en toda la app</h3>
+        <button onclick="toggleSearchModal(false)" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <input type="text" id="global-search-input" oninput="runGlobalSearch()" placeholder="Busca en flashcards y casos clínicos..." autocomplete="off"
+        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+      <div id="global-search-results" class="space-y-2 max-h-80 overflow-y-auto"></div>
     </div>
   </div>
 
@@ -1569,26 +1819,33 @@ Evalúa en máximo 4 párrafos concisos:
       const back = document.getElementById('new-card-back').value.trim();
       if (!tag || !front || !back) return;
 
-      flashcards.push({ id: Date.now() + Math.random(), tag, front, back });
+      flashcards.push({ id: Date.now() + Math.random(), tag, front, back, semester: currentSemester });
       saveData('flashcards');
       toggleCardModal(false);
       currentCardIndex = flashcards.length - 1;
       renderFlashcards();
     }
 
+    function getFilteredFlashcards() {
+      const filter = document.getElementById('flashcard-semester-filter')?.value || 'all';
+      if (filter === 'all') return flashcards;
+      return flashcards.filter(c => (c.semester || '2') === filter);
+    }
+
     function renderFlashcards() {
       const container = document.getElementById('card-viewport');
       const noCards = document.getElementById('no-cards-msg');
-      if (flashcards.length === 0) {
+      const deck = getFilteredFlashcards();
+      if (deck.length === 0) {
         container.classList.add('hidden');
         noCards.classList.remove('hidden');
         return;
       }
       container.classList.remove('hidden');
       noCards.classList.add('hidden');
-      if (currentCardIndex >= flashcards.length) currentCardIndex = 0;
-      const card = flashcards[currentCardIndex];
-      document.getElementById('deck-progress').textContent = `Tarjeta ${currentCardIndex + 1} de ${flashcards.length}`;
+      if (currentCardIndex >= deck.length) currentCardIndex = 0;
+      const card = deck[currentCardIndex];
+      document.getElementById('deck-progress').textContent = `Tarjeta ${currentCardIndex + 1} de ${deck.length}`;
       document.getElementById('card-tag').textContent = card.tag;
       document.getElementById('card-front-text').textContent = card.front;
       document.getElementById('card-back-text').textContent = card.back;
@@ -1602,17 +1859,22 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     function rateCard(difficulty) {
-      const [card] = flashcards.splice(currentCardIndex, 1);
+      const deck = getFilteredFlashcards();
+      const card = deck[currentCardIndex];
+      const realIndex = flashcards.indexOf(card);
+      flashcards.splice(realIndex, 1);
+
       let insertOffset;
       if (difficulty === 'hard') insertOffset = Math.min(2, flashcards.length);
       else if (difficulty === 'medium') insertOffset = Math.min(5, flashcards.length);
       else insertOffset = flashcards.length;
 
-      const insertIndex = Math.min(currentCardIndex + insertOffset, flashcards.length);
+      const insertIndex = Math.min(realIndex + insertOffset, flashcards.length);
       flashcards.splice(insertIndex, 0, card);
       saveData('flashcards');
 
-      if (currentCardIndex >= flashcards.length) currentCardIndex = 0;
+      const newDeck = getFilteredFlashcards();
+      if (currentCardIndex >= newDeck.length) currentCardIndex = 0;
       renderFlashcards();
     }
 
@@ -1695,7 +1957,7 @@ Evalúa en máximo 4 párrafos concisos:
 
     // --- NAVEGACIÓN ---
     function switchTab(tab) {
-      ['atlas', 'notebook', 'cases', 'pae', 'calc', 'diagrams', 'flashcards', 'timer'].forEach(t => {
+      ['atlas', 'tutor', 'notebook', 'cases', 'pae', 'calc', 'scales', 'labs', 'diagrams', 'flashcards', 'timer'].forEach(t => {
         const el = document.getElementById(`view-${t}`);
         if (el) el.classList.add('hidden');
       });
@@ -1711,6 +1973,261 @@ Evalúa en máximo 4 párrafos concisos:
       if (tab === 'flashcards') renderFlashcards();
       else if (tab === 'cases') renderCurrentCase();
       else if (tab === 'calc') { calculateDripRate(); calculateDose(); }
+      else if (tab === 'scales') { calculateGlasgow(); calculateApgar(); calculateEva(); calculateBraden(); }
+      else if (tab === 'labs') renderLabTable();
+    }
+
+    // --- SEMESTRE ACTUAL ---
+    let currentSemester = localStorage.getItem('study_semester') || '2';
+
+    function saveCurrentSemester() {
+      currentSemester = document.getElementById('semester-selector').value;
+      localStorage.setItem('study_semester', currentSemester);
+      renderFlashcards();
+    }
+
+    // --- BÚSQUEDA GLOBAL ---
+    function toggleSearchModal(show) {
+      document.getElementById('search-modal').classList.toggle('hidden', !show);
+      if (show) {
+        document.getElementById('global-search-input').value = '';
+        document.getElementById('global-search-results').innerHTML = '';
+        setTimeout(() => document.getElementById('global-search-input').focus(), 50);
+      }
+    }
+
+    function runGlobalSearch() {
+      const q = document.getElementById('global-search-input').value.trim().toLowerCase();
+      const resultsBox = document.getElementById('global-search-results');
+      if (!q) { resultsBox.innerHTML = ''; return; }
+
+      const cardMatches = flashcards.filter(c =>
+        (c.front || '').toLowerCase().includes(q) || (c.back || '').toLowerCase().includes(q) || (c.tag || '').toLowerCase().includes(q)
+      );
+      const caseMatches = clinicalCases.filter(c =>
+        (c.vignette || '').toLowerCase().includes(q) || (c.question || '').toLowerCase().includes(q) || (c.category || '').toLowerCase().includes(q)
+      );
+
+      if (cardMatches.length === 0 && caseMatches.length === 0) {
+        resultsBox.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Sin resultados.</p>';
+        return;
+      }
+
+      let html = '';
+      if (cardMatches.length > 0) {
+        html += `<p class="text-[10px] font-bold text-slate-500 uppercase pt-1">Flashcards (${cardMatches.length})</p>`;
+        cardMatches.slice(0, 8).forEach(c => {
+          const idx = flashcards.indexOf(c);
+          html += `<button onclick="jumpToFlashcard(${idx})" class="w-full text-left p-2.5 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
+            <span class="text-[10px] text-indigo-400 font-bold">${c.tag || 'Sin materia'}</span>
+            <p class="text-xs text-slate-200 truncate">${c.front}</p>
+          </button>`;
+        });
+      }
+      if (caseMatches.length > 0) {
+        html += `<p class="text-[10px] font-bold text-slate-500 uppercase pt-2">Casos Clínicos (${caseMatches.length})</p>`;
+        caseMatches.slice(0, 8).forEach(c => {
+          const idx = clinicalCases.indexOf(c);
+          html += `<button onclick="jumpToCase(${idx})" class="w-full text-left p-2.5 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
+            <span class="text-[10px] text-emerald-400 font-bold">${c.category || 'Sin categoría'}</span>
+            <p class="text-xs text-slate-200 truncate">${c.question || c.vignette}</p>
+          </button>`;
+        });
+      }
+      resultsBox.innerHTML = html;
+    }
+
+    function jumpToFlashcard(idx) {
+      currentCardIndex = idx;
+      toggleSearchModal(false);
+      switchTab('flashcards');
+    }
+
+    function jumpToCase(idx) {
+      currentCaseIndex = idx;
+      toggleSearchModal(false);
+      switchTab('cases');
+      renderCurrentCase();
+    }
+
+    // --- TUTOR IA ---
+    let tutorMode = 'free';
+    let tutorChatHistory = []; // { role: 'user'|'model', text }
+
+    function setTutorMode(mode) {
+      tutorMode = mode;
+      document.getElementById('btn-tutor-free').className = `px-3 py-1.5 rounded-lg font-bold transition ${mode === 'free' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'}`;
+      document.getElementById('btn-tutor-docs').className = `px-3 py-1.5 rounded-lg font-bold transition ${mode === 'docs' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'}`;
+    }
+
+    function appendTutorMessage(sender, text) {
+      const box = document.getElementById('tutor-chat-box');
+      const isUser = sender === 'user';
+      const bubble = document.createElement('div');
+      bubble.className = isUser
+        ? 'p-3 rounded-xl bg-violet-600/20 border border-violet-600/40 text-slate-100 ml-6'
+        : 'p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-200 mr-6';
+      bubble.innerHTML = `<p class="font-semibold text-[10px] mb-1 ${isUser ? 'text-violet-300' : 'text-slate-400'}">${isUser ? 'Tú' : 'Tutor IA'}</p><p>${text}</p>`;
+      box.appendChild(bubble);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function handleTutorMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('tutor-user-input');
+      const userText = input.value.trim();
+      if (!userText) return;
+      input.value = '';
+
+      appendTutorMessage('user', userText);
+      tutorChatHistory.push({ role: 'user', text: userText });
+
+      const thinkingId = 'thinking-' + Date.now();
+      const box = document.getElementById('tutor-chat-box');
+      box.insertAdjacentHTML('beforeend', `<div id="${thinkingId}" class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-500 mr-6 text-xs"><i class="fa-solid fa-spinner fa-spin"></i> Pensando...</div>`);
+      box.scrollTop = box.scrollHeight;
+
+      try {
+        const reply = await callGeminiTutor();
+        document.getElementById(thinkingId)?.remove();
+        appendTutorMessage('tutor', reply);
+        tutorChatHistory.push({ role: 'model', text: reply });
+      } catch (err) {
+        document.getElementById(thinkingId)?.remove();
+        appendTutorMessage('tutor', 'Hubo un error al conectar con la IA. Revisa tu clave de Gemini en "Mi Cuenta & IA".');
+      }
+    }
+
+    async function callGeminiTutor() {
+      if (!userGeminiApiKey) {
+        alert('Por favor vincula tu API Key de Google Gemini en el botón "Mi Cuenta & IA".');
+        toggleAuthModal(true);
+        throw new Error('Sin API Key');
+      }
+
+      const systemInstruction = `Eres un tutor de enfermería para un estudiante colombiano que estudia con metodología ABP (aprendizaje basado en problemas), actualmente entre 2do y 8vo semestre. Tu estilo es socrático: no des solo la respuesta directa, explica el concepto Y haz una pregunta de vuelta para que el estudiante razone (por ejemplo "¿por qué crees que pasa eso?" o "¿qué esperarías ver en un paciente con...?"). Sé breve y claro, en español, con lenguaje clínico correcto. Si el estudiante responde bien a tu pregunta, confírmalo y profundiza un poco más; si responde mal, corrígelo con amabilidad y vuelve a explicar.`;
+
+      const historyText = tutorChatHistory.map(m => `${m.role === 'user' ? 'Estudiante' : 'Tutor'}: ${m.text}`).join('\n');
+      let promptText = `${systemInstruction}\n\nConversación hasta ahora:\n${historyText}\n\nResponde como el Tutor al último mensaje del estudiante.`;
+
+      const parts = [{ text: promptText }];
+
+      if (tutorMode === 'docs') {
+        const readySources = loadedSources.filter(s => s.base64);
+        if (readySources.length === 0) {
+          return 'No tienes documentos cargados en Notebook IA todavía. Sube un PDF ahí primero, o cambia a "Modo Libre" para conversar sin documentos.';
+        }
+        parts[0].text += `\n\nBasa tu explicación en los ${readySources.length} documento(s) adjuntos: ${readySources.map(s => s.name).join(', ')}.`;
+        readySources.forEach(s => {
+          parts.push({ inline_data: { mime_type: s.mimeType, data: s.base64 } });
+        });
+      }
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${userGeminiApiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts }] })
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      return data.candidates[0].content.parts[0].text;
+    }
+
+    // --- ESCALAS CLÍNICAS ---
+    function calculateGlasgow() {
+      const eye = parseInt(document.getElementById('glasgow-eye').value);
+      const verbal = parseInt(document.getElementById('glasgow-verbal').value);
+      const motor = parseInt(document.getElementById('glasgow-motor').value);
+      const total = eye + verbal + motor;
+      let interp = 'Consciencia normal', color = 'text-emerald-400';
+      if (total <= 8) { interp = 'Coma / TCE grave'; color = 'text-rose-400'; }
+      else if (total <= 12) { interp = 'TCE moderado'; color = 'text-amber-400'; }
+      else if (total < 15) { interp = 'TCE leve'; color = 'text-amber-300'; }
+      document.getElementById('glasgow-result').innerHTML = `<span class="text-2xl font-bold text-white">${total}</span> <span class="text-xs text-slate-400">/ 15</span><p class="text-xs ${color} font-semibold mt-1">${interp}</p>`;
+    }
+
+    function calculateApgar() {
+      const total = ['fc', 're', 'tm', 'ir', 'color'].reduce((sum, id) => sum + parseInt(document.getElementById(`apgar-${id}`).value), 0);
+      let interp = 'Buen estado general', color = 'text-emerald-400';
+      if (total <= 3) { interp = 'Depresión severa'; color = 'text-rose-400'; }
+      else if (total <= 6) { interp = 'Depresión moderada'; color = 'text-amber-400'; }
+      document.getElementById('apgar-result').innerHTML = `<span class="text-2xl font-bold text-white">${total}</span> <span class="text-xs text-slate-400">/ 10</span><p class="text-xs ${color} font-semibold mt-1">${interp}</p>`;
+    }
+
+    function calculateEva() {
+      const val = document.getElementById('eva-slider').value;
+      let interp = 'Sin dolor', color = 'text-emerald-400';
+      if (val >= 8) { interp = 'Dolor muy intenso'; color = 'text-rose-400'; }
+      else if (val >= 4) { interp = 'Dolor moderado'; color = 'text-amber-400'; }
+      else if (val >= 1) { interp = 'Dolor leve'; color = 'text-amber-300'; }
+      document.getElementById('eva-result').innerHTML = `<span class="text-2xl font-bold text-white">${val}</span> <span class="text-xs text-slate-400">/ 10</span><p class="text-xs ${color} font-semibold mt-1">${interp}</p>`;
+    }
+
+    function calculateBraden() {
+      const total = [1, 2, 3, 4, 5, 6].reduce((sum, n) => sum + parseInt(document.getElementById(`braden-${n}`).value), 0);
+      let interp = 'Sin riesgo', color = 'text-emerald-400';
+      if (total <= 9) { interp = 'Riesgo muy alto'; color = 'text-rose-400'; }
+      else if (total <= 12) { interp = 'Riesgo alto'; color = 'text-orange-400'; }
+      else if (total <= 14) { interp = 'Riesgo moderado'; color = 'text-amber-400'; }
+      else if (total <= 18) { interp = 'Riesgo bajo'; color = 'text-amber-300'; }
+      document.getElementById('braden-result').innerHTML = `<span class="text-2xl font-bold text-white">${total}</span> <span class="text-xs text-slate-400">/ 23</span><p class="text-xs ${color} font-semibold mt-1">${interp}</p>`;
+    }
+
+    // --- VALORES DE LABORATORIO ---
+    const labValuesDB = [
+      { name: 'Hemoglobina (Hombre)', value: '13.5 - 17.5', unit: 'g/dL' },
+      { name: 'Hemoglobina (Mujer)', value: '12.0 - 15.5', unit: 'g/dL' },
+      { name: 'Hematocrito (Hombre)', value: '38.8 - 50.0', unit: '%' },
+      { name: 'Hematocrito (Mujer)', value: '34.9 - 44.5', unit: '%' },
+      { name: 'Leucocitos', value: '4,500 - 11,000', unit: '/mm³' },
+      { name: 'Plaquetas', value: '150,000 - 450,000', unit: '/mm³' },
+      { name: 'Glicemia en ayunas', value: '70 - 100', unit: 'mg/dL' },
+      { name: 'Sodio (Na+)', value: '135 - 145', unit: 'mEq/L' },
+      { name: 'Potasio (K+)', value: '3.5 - 5.0', unit: 'mEq/L' },
+      { name: 'Cloro (Cl-)', value: '96 - 106', unit: 'mEq/L' },
+      { name: 'Calcio total', value: '8.5 - 10.5', unit: 'mg/dL' },
+      { name: 'Creatinina (Hombre)', value: '0.7 - 1.3', unit: 'mg/dL' },
+      { name: 'Creatinina (Mujer)', value: '0.6 - 1.1', unit: 'mg/dL' },
+      { name: 'BUN (Nitrógeno ureico)', value: '7 - 20', unit: 'mg/dL' },
+      { name: 'INR', value: '0.8 - 1.1', unit: 'ratio' },
+      { name: 'Tiempo de Protrombina (PT)', value: '11 - 13.5', unit: 'seg' },
+      { name: 'PTT', value: '25 - 35', unit: 'seg' },
+      { name: 'Colesterol Total', value: '< 200', unit: 'mg/dL' },
+      { name: 'Triglicéridos', value: '< 150', unit: 'mg/dL' },
+      { name: 'Saturación de Oxígeno (SpO2)', value: '95 - 100', unit: '%' },
+      { name: 'Frecuencia Cardíaca (Adulto)', value: '60 - 100', unit: 'lpm' },
+      { name: 'Frecuencia Respiratoria (Adulto)', value: '12 - 20', unit: 'rpm' },
+      { name: 'Presión Arterial', value: '90/60 - 120/80', unit: 'mmHg' },
+      { name: 'Temperatura Corporal', value: '36.0 - 37.5', unit: '°C' },
+      { name: 'pH Arterial', value: '7.35 - 7.45', unit: '' },
+      { name: 'PaCO2', value: '35 - 45', unit: 'mmHg' },
+      { name: 'PaO2', value: '80 - 100', unit: 'mmHg' },
+      { name: 'Bicarbonato (HCO3-)', value: '22 - 26', unit: 'mEq/L' }
+    ];
+
+    function renderLabTable() {
+      const tbody = document.getElementById('lab-values-tbody');
+      tbody.innerHTML = labValuesDB.map(l => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="px-4 py-2.5 font-medium">${l.name}</td>
+          <td class="px-4 py-2.5 text-emerald-400 font-semibold">${l.value}</td>
+          <td class="px-4 py-2.5 text-slate-400">${l.unit}</td>
+        </tr>
+      `).join('');
+    }
+
+    function filterLabTable() {
+      const q = document.getElementById('lab-search-input').value.trim().toLowerCase();
+      const filtered = labValuesDB.filter(l => l.name.toLowerCase().includes(q));
+      const tbody = document.getElementById('lab-values-tbody');
+      tbody.innerHTML = filtered.map(l => `
+        <tr class="hover:bg-slate-800/40">
+          <td class="px-4 py-2.5 font-medium">${l.name}</td>
+          <td class="px-4 py-2.5 text-emerald-400 font-semibold">${l.value}</td>
+          <td class="px-4 py-2.5 text-slate-400">${l.unit}</td>
+        </tr>
+      `).join('');
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -1722,6 +2239,12 @@ Evalúa en máximo 4 párrafos concisos:
       renderFlashcards();
       calculateDripRate();
       calculateDose();
+      document.getElementById('semester-selector').value = currentSemester;
+      calculateGlasgow();
+      calculateApgar();
+      calculateEva();
+      calculateBraden();
+      renderLabTable();
 
       // La app arranca bloqueada. Solo se desbloquea si ya hay una sesión activa.
       if (supabaseClient) {
