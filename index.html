@@ -69,7 +69,7 @@
       </div>
 
       <!-- Barra de Pestañas -->
-      <div id="main-nav-wrapper" class="hidden relative w-full md:w-auto">
+      <div id="main-nav-wrapper" class="hidden relative w-full">
         <nav id="main-nav" class="flex w-full bg-slate-950/80 p-1 rounded-xl border border-slate-800 overflow-x-auto gap-1">
         <button onclick="switchTab('atlas')" id="nav-atlas" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap">
           <i class="fa-solid fa-person-running text-rose-400"></i>
@@ -2569,16 +2569,22 @@ Evalúa en máximo 4 párrafos concisos:
       if (nav) nav.scrollBy({ left: direction * 200, behavior: 'smooth' });
     }
 
-    // Atenúa y desactiva cada flecha cuando la barra ya está en ese extremo.
+    // Atenúa y desactiva cada flecha cuando la barra ya está en ese extremo, y
+    // centra las pestañas dentro de la barra cuando todas caben sin necesitar scroll
+    // (si no caben, se deja alineado al inicio para que las flechas y el scroll
+    // sigan correspondiendo con scrollLeft = 0 en la primera pestaña).
     function updateTabsNavArrows() {
       const nav = document.getElementById('main-nav');
       const leftBtn = document.getElementById('nav-scroll-left');
       const rightBtn = document.getElementById('nav-scroll-right');
       if (!nav || !leftBtn || !rightBtn) return;
 
+      const fitsWithoutScroll = nav.scrollWidth <= nav.clientWidth + 1;
+      nav.classList.toggle('justify-center', fitsWithoutScroll);
+
       const maxScroll = nav.scrollWidth - nav.clientWidth;
-      const atStart = nav.scrollLeft <= 2;
-      const atEnd = nav.scrollLeft >= maxScroll - 2;
+      const atStart = fitsWithoutScroll || nav.scrollLeft <= 2;
+      const atEnd = fitsWithoutScroll || nav.scrollLeft >= maxScroll - 2;
 
       leftBtn.classList.toggle('opacity-30', atStart);
       leftBtn.classList.toggle('pointer-events-none', atStart);
