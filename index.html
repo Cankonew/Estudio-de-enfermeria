@@ -1451,6 +1451,7 @@ graph TD
       };
       flashcards.push(newCard);
       saveData('flashcards');
+      upsertFlashcardToCloud(newCard);
       switchTab('flashcards');
 
       const deck = getFilteredFlashcards();
@@ -1946,9 +1947,25 @@ Evalúa en máximo 4 párrafos concisos:
           const text = await callGeminiWithPDF(prompt);
           const newCards = parseGeminiJSON(text);
 
-          newCards.forEach(c => flashcards.push({ ...c, id: Date.now() + Math.random(), semester: currentSemester, box: 1, nextReview: todayISO() }));
+          // Evita re-agregar tarjetas casi idénticas a una que ya tengas (mismo tag+pregunta),
+          // que es lo que pasaba al generar del mismo PDF más de una vez.
+          const existingKeys = new Set(flashcards.map(c => [(c.tag || '').trim().toLowerCase(), (c.front || '').trim().toLowerCase()].join('|')));
+          let skipped = 0;
+          const addedCards = [];
+          newCards.forEach(c => {
+            const k = [(c.tag || '').trim().toLowerCase(), (c.front || '').trim().toLowerCase()].join('|');
+            if (existingKeys.has(k)) { skipped++; return; }
+            existingKeys.add(k);
+            const card = { ...c, id: Date.now() + Math.random(), semester: currentSemester, box: 1, nextReview: todayISO() };
+            flashcards.push(card);
+            addedCards.push(card);
+          });
           saveData('flashcards');
-          appendChatMessage('ai', `✅ Se generaron **${newCards.length} Flashcards** en tu mazo de repaso.`);
+          addedCards.forEach(upsertFlashcardToCloud);
+          const added = newCards.length - skipped;
+          appendChatMessage('ai', skipped > 0
+            ? `✅ Se agregaron **${added} Flashcards** nuevas a tu mazo (se omitieron ${skipped} por ser iguales a tarjetas que ya tenías).`
+            : `✅ Se generaron **${newCards.length} Flashcards** en tu mazo de repaso.`);
         } catch (e) {
           appendChatMessage('ai', e.isAIJsonError ? aiJsonErrorHTML("askPDFAction('flashcards')") : 'Error: ' + e.message);
         }
@@ -2159,14 +2176,26 @@ Evalúa en máximo 4 párrafos concisos:
 
       if (supabaseClient && currentUser) {
         try {
-          if (type === 'flashcards') await supabaseClient.from('flashcards').upsert(flashcards.map(f => ({
-            id: f.id, tag: f.tag, topic: f.topic, front: f.front, back: f.back, semester: f.semester,
-            box: f.box, next_review: f.nextReview, user_id: currentUser.id
-          })));
+          // Nota: 'flashcards' YA NO se sube completo aquí — ver upsertFlashcardToCloud().
+          // Subir el arreglo entero en cada guardado era lo que resucitaba tarjetas borradas:
+          // si otro dispositivo tenía una copia local desactualizada, la volvía a subir entera.
           if (type === 'cases') await supabaseClient.from('clinical_cases').upsert(clinicalCases.map(c => ({ ...c, user_id: currentUser.id })));
           if (type === 'stats') await supabaseClient.from('study_stats').upsert({ user_id: currentUser.id, sessions: studyStats.sessions, minutes: studyStats.minutes });
         } catch (err) {}
       }
+    }
+
+    // Sincroniza SOLO la tarjeta indicada a Supabase (no el mazo completo), para que un
+    // dispositivo con caché local desactualizada nunca pueda resucitar una tarjeta que
+    // se borró desde otro dispositivo o directo en la base de datos.
+    async function upsertFlashcardToCloud(card) {
+      if (!supabaseClient || !currentUser || !card) return;
+      try {
+        await supabaseClient.from('flashcards').upsert({
+          id: card.id, tag: card.tag, topic: card.topic, front: card.front, back: card.back,
+          semester: card.semester, box: card.box, next_review: card.nextReview, user_id: currentUser.id
+        });
+      } catch (err) {}
     }
 
     // --- BANCO DE PREGUNTAS (QUIZ CRONOMETRADO) ---
@@ -2535,7 +2564,13 @@ Evalúa en máximo 4 párrafos concisos:
         if (cloudCards && cloudCards.length > 0) {
           flashcards = cloudCards.map(c => ({ id: c.id, tag: c.tag, topic: c.topic, front: c.front, back: c.back, semester: c.semester, box: c.box, nextReview: c.next_review }));
           flashcards.forEach(ensureLeitnerFields);
-          saveData('flashcards');
+          localStorage.setItem('study_cards', JSON.stringify(flashcards));
+          renderFlashcards();
+        } else if (cloudCards && cloudCards.length === 0) {
+          // La nube es la fuente de verdad: si en Supabase no hay tarjetas (por ejemplo,
+          // las borraste todas), no debemos seguir mostrando una copia local vieja.
+          flashcards = [];
+          localStorage.setItem('study_cards', JSON.stringify(flashcards));
           renderFlashcards();
         }
 
@@ -2780,6 +2815,7 @@ Evalúa en máximo 4 párrafos concisos:
           // Nota: box y nextReview NO se tocan al editar — corregir el texto de una
           // tarjeta no debería resetear tu progreso de repetición espaciada en ella.
           saveData('flashcards');
+          upsertFlashcardToCloud(card);
         }
         editingCardId = null;
         toggleCardModal(false);
@@ -2791,6 +2827,7 @@ Evalúa en máximo 4 párrafos concisos:
       const newCard = { id: Date.now() + Math.random(), tag, topic, front, back, semester: currentSemester, box: 1, nextReview: todayISO() };
       flashcards.push(newCard);
       saveData('flashcards');
+      upsertFlashcardToCloud(newCard);
       toggleCardModal(false);
 
       const deck = getFilteredFlashcards();
@@ -2944,6 +2981,7 @@ Evalúa en máximo 4 párrafos concisos:
         card.nextReview = addDaysISO(1);
       }
       saveData('flashcards');
+      upsertFlashcardToCloud(card);
 
       const newDeck = getFilteredFlashcards();
       if (currentCardIndex >= newDeck.length) currentCardIndex = 0;
