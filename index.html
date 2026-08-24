@@ -955,10 +955,17 @@ graph TD
         </div>
       </div>
 
+      <div id="leitner-box-summary" class="max-w-xl mx-auto mb-4 flex flex-wrap justify-center gap-1.5 text-[11px] text-slate-400 font-semibold"></div>
+
       <div id="flashcard-study-container" class="max-w-xl mx-auto">
         <div id="no-cards-msg" class="text-center py-16 bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl">
           <i class="fa-solid fa-layer-group text-4xl text-slate-600 mb-3"></i>
           <p class="text-slate-400 text-sm">No tienes tarjetas en este mazo.</p>
+        </div>
+
+        <div id="all-caught-up-msg" class="hidden text-center py-16 bg-slate-900/40 border border-dashed border-emerald-800/60 rounded-2xl">
+          <i class="fa-solid fa-circle-check text-4xl text-emerald-500 mb-3"></i>
+          <p class="text-emerald-400 text-sm font-semibold">¡Ya repasaste todo por hoy! Vuelve mañana.</p>
         </div>
 
         <div id="card-viewport" class="hidden space-y-6">
@@ -982,10 +989,9 @@ graph TD
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-3 pt-2">
-            <button onclick="rateCard('hard')" class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500 hover:text-white text-xs font-bold transition flex flex-col items-center gap-1">Difícil</button>
-            <button onclick="rateCard('medium')" class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500 hover:text-white text-xs font-bold transition flex flex-col items-center gap-1">Regular</button>
-            <button onclick="rateCard('easy')" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500 hover:text-white text-xs font-bold transition flex flex-col items-center gap-1">Fácil</button>
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <button onclick="rateCard(false)" class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500 hover:text-white text-xs font-bold transition flex flex-col items-center gap-1">❌ No la sabía</button>
+            <button onclick="rateCard(true)" class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500 hover:text-white text-xs font-bold transition flex flex-col items-center gap-1">✅ La sabía</button>
           </div>
         </div>
       </div>
@@ -1391,17 +1397,24 @@ graph TD
 
     function sendCurrentStructureToFlashcards() {
       const st = bioDigitalDB[activeBioSystemKey].structures[currentStructureIndex];
-      flashcards.push({
+      const newCard = {
         id: Date.now(),
         tag: st.type,
         front: `¿Cuál es la inervación, acción y relevancia clínica de ${st.name}?`,
         back: `• Inervación: ${st.innervation}
 • Acción: ${st.action}
-• Clínica: ${st.clinical_pearl}`
-      });
+• Clínica: ${st.clinical_pearl}`,
+        semester: currentSemester,
+        box: 1,
+        nextReview: todayISO()
+      };
+      flashcards.push(newCard);
       saveData('flashcards');
       switchTab('flashcards');
-      currentCardIndex = flashcards.length - 1;
+
+      const deck = getFilteredFlashcards();
+      const idx = deck.findIndex(c => c.id === newCard.id);
+      currentCardIndex = idx === -1 ? 0 : idx;
       renderFlashcards();
     }
 
@@ -1562,8 +1575,10 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     function playCurrentCardAudio() {
-      if (!isAudioStudyActive || flashcards.length === 0) return;
-      const card = flashcards[currentCardIndex];
+      const deck = getFilteredFlashcards();
+      if (!isAudioStudyActive || deck.length === 0) return;
+      if (currentCardIndex >= deck.length) currentCardIndex = 0;
+      const card = deck[currentCardIndex];
 
       const utterFront = new SpeechSynthesisUtterance("Pregunta: " + card.front);
       utterFront.lang = 'es-CO';
@@ -1578,7 +1593,9 @@ Evalúa en máximo 4 párrafos concisos:
           utterBack.onend = () => {
             setTimeout(() => {
               if (!isAudioStudyActive) return;
-              currentCardIndex = (currentCardIndex + 1) % flashcards.length;
+              const currentDeck = getFilteredFlashcards();
+              if (currentDeck.length === 0) { isAudioStudyActive = false; return; }
+              currentCardIndex = (currentCardIndex + 1) % currentDeck.length;
               renderFlashcards();
               playCurrentCardAudio();
             }, 3000);
@@ -1811,7 +1828,7 @@ Evalúa en máximo 4 párrafos concisos:
           const text = await callGeminiWithPDF(prompt);
           const newCards = parseGeminiJSON(text);
 
-          newCards.forEach(c => flashcards.push({ id: Date.now() + Math.random(), ...c }));
+          newCards.forEach(c => flashcards.push({ ...c, id: Date.now() + Math.random(), semester: currentSemester, box: 1, nextReview: todayISO() }));
           saveData('flashcards');
           appendChatMessage('ai', `✅ Se generaron **${newCards.length} Flashcards** en tu mazo de repaso.`);
         } catch (e) {
@@ -1873,10 +1890,32 @@ Evalúa en máximo 4 párrafos concisos:
       }
     }
 
+    // --- MÉTODO LEITNER (REPASO ESPACIADO DE FLASHCARDS) ---
+    const LEITNER_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 9, 5: 15 }; // días hasta el próximo repaso, por caja
+
+    function todayISO() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function addDaysISO(days) {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    // Migra tarjetas antiguas (creadas antes del método Leitner) a Caja 1, listas para hoy.
+    function ensureLeitnerFields(card) {
+      if (!card.box || card.box < 1 || card.box > 5) card.box = 1;
+      if (!card.nextReview) card.nextReview = todayISO();
+      return card;
+    }
+
     // --- GESTIÓN DE DATOS & SUPABASE ---
     let flashcards = JSON.parse(localStorage.getItem('study_cards')) || [
       { id: 1, tag: 'Miología', front: '¿Cuáles son los 4 músculos del manguito rotador y su regla mnemotécnica?', back: 'Regla SIRS: Supraespinoso, Infraespinoso, Redondo menor y Subescapular.' }
     ];
+    flashcards.forEach(ensureLeitnerFields);
 
     let clinicalCases = JSON.parse(localStorage.getItem('study_clinical_cases')) || [
       {
@@ -1898,7 +1937,10 @@ Evalúa en máximo 4 párrafos concisos:
 
       if (supabaseClient && currentUser) {
         try {
-          if (type === 'flashcards') await supabaseClient.from('flashcards').upsert(flashcards.map(f => ({ ...f, user_id: currentUser.id })));
+          if (type === 'flashcards') await supabaseClient.from('flashcards').upsert(flashcards.map(f => ({
+            id: f.id, tag: f.tag, front: f.front, back: f.back, semester: f.semester,
+            box: f.box, next_review: f.nextReview, user_id: currentUser.id
+          })));
           if (type === 'cases') await supabaseClient.from('clinical_cases').upsert(clinicalCases.map(c => ({ ...c, user_id: currentUser.id })));
           if (type === 'stats') await supabaseClient.from('study_stats').upsert({ user_id: currentUser.id, sessions: studyStats.sessions, minutes: studyStats.minutes });
         } catch (err) {}
@@ -2261,7 +2303,8 @@ Evalúa en máximo 4 párrafos concisos:
 
         const { data: cloudCards } = await supabaseClient.from('flashcards').select('*').eq('user_id', currentUser.id);
         if (cloudCards && cloudCards.length > 0) {
-          flashcards = cloudCards;
+          flashcards = cloudCards.map(c => ({ id: c.id, tag: c.tag, front: c.front, back: c.back, semester: c.semester, box: c.box, nextReview: c.next_review }));
+          flashcards.forEach(ensureLeitnerFields);
           saveData('flashcards');
           renderFlashcards();
         }
@@ -2398,33 +2441,75 @@ Evalúa en máximo 4 párrafos concisos:
       const back = document.getElementById('new-card-back').value.trim();
       if (!tag || !front || !back) return;
 
-      flashcards.push({ id: Date.now() + Math.random(), tag, front, back, semester: currentSemester });
+      const newCard = { id: Date.now() + Math.random(), tag, front, back, semester: currentSemester, box: 1, nextReview: todayISO() };
+      flashcards.push(newCard);
       saveData('flashcards');
       toggleCardModal(false);
-      currentCardIndex = flashcards.length - 1;
+
+      const deck = getFilteredFlashcards();
+      const idx = deck.findIndex(c => c.id === newCard.id);
+      currentCardIndex = idx === -1 ? 0 : idx;
       renderFlashcards();
     }
 
+    // Solo devuelve las tarjetas del semestre filtrado cuyo nextReview ya llegó (<= hoy),
+    // priorizando primero las de caja más baja (las que más lo necesitan).
     function getFilteredFlashcards() {
       const filter = document.getElementById('flashcard-semester-filter')?.value || 'all';
-      if (filter === 'all') return flashcards;
-      return flashcards.filter(c => (c.semester || '2') === filter);
+      const today = todayISO();
+      let deck = flashcards.filter(c => c.nextReview <= today);
+      if (filter !== 'all') deck = deck.filter(c => (c.semester || '2') === filter);
+      return deck.sort((a, b) => (a.box || 1) - (b.box || 1));
+    }
+
+    // Todas las tarjetas del semestre filtrado (sin importar si tocan hoy), agrupadas por caja.
+    function getBoxCounts() {
+      const filter = document.getElementById('flashcard-semester-filter')?.value || 'all';
+      const pool = filter === 'all' ? flashcards : flashcards.filter(c => (c.semester || '2') === filter);
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      pool.forEach(c => { counts[c.box || 1] = (counts[c.box || 1] || 0) + 1; });
+      return counts;
+    }
+
+    function renderBoxSummary() {
+      const el = document.getElementById('leitner-box-summary');
+      if (!el) return;
+      const counts = getBoxCounts();
+      el.innerHTML = [1, 2, 3, 4, 5].map(b => `
+        <span class="px-2.5 py-1 bg-slate-900/60 border border-slate-800 rounded-full">Caja ${b}: <strong class="text-slate-200">${counts[b]}</strong></span>
+      `).join('');
     }
 
     function renderFlashcards() {
+      renderBoxSummary();
+
       const container = document.getElementById('card-viewport');
       const noCards = document.getElementById('no-cards-msg');
+      const allCaughtUp = document.getElementById('all-caught-up-msg');
+
+      const filter = document.getElementById('flashcard-semester-filter')?.value || 'all';
+      const totalInFilter = filter === 'all' ? flashcards.length : flashcards.filter(c => (c.semester || '2') === filter).length;
       const deck = getFilteredFlashcards();
-      if (deck.length === 0) {
+
+      if (totalInFilter === 0) {
         container.classList.add('hidden');
+        allCaughtUp.classList.add('hidden');
         noCards.classList.remove('hidden');
         return;
       }
+      if (deck.length === 0) {
+        container.classList.add('hidden');
+        noCards.classList.add('hidden');
+        allCaughtUp.classList.remove('hidden');
+        return;
+      }
+
       container.classList.remove('hidden');
       noCards.classList.add('hidden');
+      allCaughtUp.classList.add('hidden');
       if (currentCardIndex >= deck.length) currentCardIndex = 0;
       const card = deck[currentCardIndex];
-      document.getElementById('deck-progress').textContent = `Tarjeta ${currentCardIndex + 1} de ${deck.length}`;
+      document.getElementById('deck-progress').textContent = `Tarjeta ${currentCardIndex + 1} de ${deck.length} (Caja ${card.box || 1})`;
       document.getElementById('card-tag').textContent = card.tag;
       document.getElementById('card-front-text').textContent = card.front;
       document.getElementById('card-back-text').textContent = card.back;
@@ -2437,19 +2522,20 @@ Evalúa en máximo 4 párrafos concisos:
       document.getElementById('card-inner').classList.toggle('rotate-y-180', isCardFlipped);
     }
 
-    function rateCard(difficulty) {
+    // Método Leitner: "La sabía" avanza de caja (tope 5) y reprograma según el intervalo
+    // de la nueva caja; "No la sabía" regresa a Caja 1 y se repite mañana.
+    function rateCard(knew) {
       const deck = getFilteredFlashcards();
       const card = deck[currentCardIndex];
-      const realIndex = flashcards.indexOf(card);
-      flashcards.splice(realIndex, 1);
+      if (!card) return;
 
-      let insertOffset;
-      if (difficulty === 'hard') insertOffset = Math.min(2, flashcards.length);
-      else if (difficulty === 'medium') insertOffset = Math.min(5, flashcards.length);
-      else insertOffset = flashcards.length;
-
-      const insertIndex = Math.min(realIndex + insertOffset, flashcards.length);
-      flashcards.splice(insertIndex, 0, card);
+      if (knew) {
+        card.box = Math.min((card.box || 1) + 1, 5);
+        card.nextReview = addDaysISO(LEITNER_INTERVALS[card.box]);
+      } else {
+        card.box = 1;
+        card.nextReview = addDaysISO(1);
+      }
       saveData('flashcards');
 
       const newDeck = getFilteredFlashcards();
@@ -2695,8 +2781,7 @@ Evalúa en máximo 4 párrafos concisos:
       if (cardMatches.length > 0) {
         html += `<p class="text-[10px] font-bold text-slate-500 uppercase pt-1">Flashcards (${cardMatches.length})</p>`;
         cardMatches.slice(0, 8).forEach(c => {
-          const idx = flashcards.indexOf(c);
-          html += `<button onclick="jumpToFlashcard(${idx})" class="w-full text-left p-2.5 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
+          html += `<button onclick="jumpToFlashcard(${c.id})" class="w-full text-left p-2.5 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
             <span class="text-[10px] text-indigo-400 font-bold">${c.tag || 'Sin materia'}</span>
             <p class="text-xs text-slate-200 truncate">${c.front}</p>
           </button>`;
@@ -2715,7 +2800,13 @@ Evalúa en máximo 4 párrafos concisos:
       resultsBox.innerHTML = html;
     }
 
-    function jumpToFlashcard(idx) {
+    function jumpToFlashcard(cardId) {
+      const deck = getFilteredFlashcards();
+      const idx = deck.findIndex(c => c.id === cardId);
+      if (idx === -1) {
+        alert('Esa flashcard no está pendiente de repaso hoy (o no coincide con el filtro de núcleo actual).');
+        return;
+      }
       currentCardIndex = idx;
       toggleSearchModal(false);
       switchTab('flashcards');
