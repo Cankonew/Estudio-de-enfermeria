@@ -53,6 +53,9 @@
           <option value="7">Sem VII: Cuidado al Niño, Adolescente y Familia</option>
           <option value="8">Sem VIII: Gerencia Integral del Cuidado</option>
         </select>
+        <button onclick="toggleEnergyMode()" id="btn-energy-mode" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border" title="Alterna entre modo Descansado y modo Turno (ajusta la carga de estudio)">
+          <i id="energy-mode-icon" class="fa-solid fa-battery-full"></i> <span id="energy-mode-label" class="hidden sm:inline">Descansado</span>
+        </button>
         <button onclick="toggleTabsCustomizeModal(true)" class="w-9 h-9 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl transition" title="Personalizar Pestañas">
           <i class="fa-solid fa-gear"></i>
         </button>
@@ -957,6 +960,10 @@ graph TD
 
       <div id="leitner-box-summary" class="max-w-xl mx-auto mb-4 flex flex-wrap justify-center gap-1.5 text-[11px] text-slate-400 font-semibold"></div>
 
+      <div id="shift-mode-banner" class="hidden max-w-xl mx-auto mb-4 text-center text-[11px] font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl px-3 py-2">
+        <i class="fa-solid fa-moon"></i> Modo Turno activo: sesión reducida a las tarjetas que más lo necesitan. Nada de contenido nuevo hoy.
+      </div>
+
       <div id="flashcard-study-container" class="max-w-xl mx-auto">
         <div id="no-cards-msg" class="text-center py-16 bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl">
           <i class="fa-solid fa-layer-group text-4xl text-slate-600 mb-3"></i>
@@ -1791,6 +1798,7 @@ Evalúa en máximo 4 párrafos concisos:
       pdfActionQty[type] = qty;
       localStorage.setItem(`study_pdf_qty_${type}`, qty);
       updatePDFActionQtyLabel(type);
+      syncPreferencesToCloud();
     }
 
     async function askPDFAction(action) {
@@ -1909,6 +1917,106 @@ Evalúa en máximo 4 párrafos concisos:
       if (!card.box || card.box < 1 || card.box > 5) card.box = 1;
       if (!card.nextReview) card.nextReview = todayISO();
       return card;
+    }
+
+    // --- MODO DE ENERGÍA (Turno / Descansado) ---
+    // Pensado para el ritmo de turnos 12h/48h: en modo Turno se reduce la carga
+    // de repaso (menos tarjetas, sin contenido nuevo) para no forzar consolidación
+    // de memoria con privación de sueño.
+    const SHIFT_MODE_CARD_LIMIT = 8;
+    let energyMode = localStorage.getItem('study_energy_mode') || 'rested'; // 'rested' | 'shift'
+
+    function updateEnergyModeUI() {
+      const btn = document.getElementById('btn-energy-mode');
+      const icon = document.getElementById('energy-mode-icon');
+      const label = document.getElementById('energy-mode-label');
+      const banner = document.getElementById('shift-mode-banner');
+      if (!btn) return;
+      if (energyMode === 'shift') {
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border bg-amber-500/20 text-amber-300 border-amber-500/40';
+        icon.className = 'fa-solid fa-battery-quarter';
+        label.textContent = 'Turno';
+      } else {
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+        icon.className = 'fa-solid fa-battery-full';
+        label.textContent = 'Descansado';
+      }
+      if (banner) banner.classList.toggle('hidden', energyMode !== 'shift');
+    }
+
+    async function setEnergyMode(mode) {
+      energyMode = mode;
+      localStorage.setItem('study_energy_mode', mode);
+      updateEnergyModeUI();
+      renderFlashcards();
+      if (supabaseClient && currentUser) {
+        try {
+          await supabaseClient.from('user_profiles').upsert({ id: currentUser.id, energy_mode: mode });
+        } catch (e) {}
+      }
+    }
+
+    function toggleEnergyMode() {
+      setEnergyMode(energyMode === 'shift' ? 'rested' : 'shift');
+    }
+
+    // --- PREFERENCIAS DE INTERFAZ SINCRONIZADAS (semestre, pestañas, audio, cantidades PDF) ---
+    // Se guardan todas juntas en una sola columna jsonb (user_profiles.preferences)
+    // para no tener que crear una columna por cada ajuste.
+    let prefsSyncTimeout = null;
+    function syncPreferencesToCloud() {
+      if (!supabaseClient || !currentUser) return;
+      clearTimeout(prefsSyncTimeout);
+      // Debounce corto: si el usuario mueve varios ajustes seguidos (ej. varias cantidades PDF),
+      // se agrupa en una sola escritura a la nube en vez de una por cada tecla.
+      prefsSyncTimeout = setTimeout(async () => {
+        try {
+          await supabaseClient.from('user_profiles').upsert({
+            id: currentUser.id,
+            preferences: {
+              semester: currentSemester,
+              visible_tabs: visibleTabs,
+              tutor_speak: tutorSpeakEnabled,
+              pdf_qty: pdfActionQty
+            }
+          });
+        } catch (e) {}
+      }, 600);
+    }
+
+    function applyCloudPreferences(prefs) {
+      if (!prefs) return;
+      if (prefs.semester) {
+        currentSemester = prefs.semester;
+        localStorage.setItem('study_semester', currentSemester);
+        const sel = document.getElementById('semester-selector');
+        const quizSel = document.getElementById('quiz-semester-filter');
+        if (sel) sel.value = currentSemester;
+        if (quizSel) quizSel.value = currentSemester;
+      }
+      if (Array.isArray(prefs.visible_tabs) && prefs.visible_tabs.length > 0) {
+        visibleTabs = prefs.visible_tabs;
+        localStorage.setItem('study_visible_tabs', JSON.stringify(visibleTabs));
+        applyVisibleTabsToNav();
+        if (!visibleTabs.includes(currentTab)) switchTab(visibleTabs[0]);
+      }
+      if (typeof prefs.tutor_speak === 'boolean') {
+        tutorSpeakEnabled = prefs.tutor_speak;
+        localStorage.setItem('study_tutor_speak', tutorSpeakEnabled ? 'true' : 'false');
+        updateTutorSpeakToggleUI();
+      }
+      if (prefs.pdf_qty && typeof prefs.pdf_qty === 'object') {
+        Object.keys(PDF_ACTION_QTY_DEFAULTS).forEach(type => {
+          const v = prefs.pdf_qty[type];
+          if (v >= PDF_ACTION_QTY_MIN && v <= PDF_ACTION_QTY_MAX) {
+            pdfActionQty[type] = v;
+            localStorage.setItem(`study_pdf_qty_${type}`, v);
+            const input = document.getElementById(`qty-pdf-${type}`);
+            if (input) input.value = v;
+            updatePDFActionQtyLabel(type);
+          }
+        });
+      }
     }
 
     // --- GESTIÓN DE DATOS & SUPABASE ---
@@ -2294,11 +2402,19 @@ Evalúa en máximo 4 párrafos concisos:
     async function loadCloudUserData() {
       if (!supabaseClient || !currentUser) return;
       try {
-        const { data: profile } = await supabaseClient.from('user_profiles').select('gemini_api_key').eq('id', currentUser.id).single();
+        const { data: profile } = await supabaseClient.from('user_profiles').select('gemini_api_key, energy_mode, preferences').eq('id', currentUser.id).single();
         if (profile && profile.gemini_api_key) {
           userGeminiApiKey = profile.gemini_api_key;
           localStorage.setItem('study_gemini_key', userGeminiApiKey);
           document.getElementById('user-gemini-key').value = userGeminiApiKey;
+        }
+        if (profile && profile.energy_mode) {
+          energyMode = profile.energy_mode;
+          localStorage.setItem('study_energy_mode', energyMode);
+          updateEnergyModeUI();
+        }
+        if (profile && profile.preferences) {
+          applyCloudPreferences(profile.preferences);
         }
 
         const { data: cloudCards } = await supabaseClient.from('flashcards').select('*').eq('user_id', currentUser.id);
@@ -2459,7 +2575,10 @@ Evalúa en máximo 4 párrafos concisos:
       const today = todayISO();
       let deck = flashcards.filter(c => c.nextReview <= today);
       if (filter !== 'all') deck = deck.filter(c => (c.semester || '2') === filter);
-      return deck.sort((a, b) => (a.box || 1) - (b.box || 1));
+      deck = deck.sort((a, b) => (a.box || 1) - (b.box || 1));
+      // En modo Turno: sesión corta, solo las que más lo necesitan (caja más baja primero).
+      if (energyMode === 'shift') deck = deck.slice(0, SHIFT_MODE_CARD_LIMIT);
+      return deck;
     }
 
     // Todas las tarjetas del semestre filtrado (sin importar si tocan hoy), agrupadas por caja.
@@ -2671,6 +2790,7 @@ Evalúa en máximo 4 párrafos concisos:
       localStorage.setItem('study_visible_tabs', JSON.stringify(visibleTabs));
       applyVisibleTabsToNav();
       if (!checked && key === currentTab) switchTab(visibleTabs[0]);
+      syncPreferencesToCloud();
     }
 
     // --- NAVEGACIÓN ---
@@ -2747,6 +2867,7 @@ Evalúa en máximo 4 párrafos concisos:
     function saveCurrentSemester() {
       currentSemester = document.getElementById('semester-selector').value;
       localStorage.setItem('study_semester', currentSemester);
+      syncPreferencesToCloud();
       renderFlashcards();
     }
 
@@ -2909,6 +3030,7 @@ Evalúa en máximo 4 párrafos concisos:
       localStorage.setItem('study_tutor_speak', tutorSpeakEnabled ? 'true' : 'false');
       updateTutorSpeakToggleUI();
       if (!tutorSpeakEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+      syncPreferencesToCloud();
     }
 
     function updateTutorSpeakToggleUI() {
@@ -3164,6 +3286,7 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
+      updateEnergyModeUI();
       applyVisibleTabsToNav();
       if (!visibleTabs.includes(currentTab)) switchTab(visibleTabs[0]);
       updateTutorSpeakToggleUI();
