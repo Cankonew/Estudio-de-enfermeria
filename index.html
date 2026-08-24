@@ -1450,7 +1450,7 @@ graph TD
       switchTab('flashcards');
 
       const deck = getFilteredFlashcards();
-      const idx = deck.findIndex(c => c.id === newCard.id);
+      const idx = deck.findIndex(c => String(c.id) === String(newCard.id));
       currentCardIndex = idx === -1 ? 0 : idx;
       renderFlashcards();
     }
@@ -2682,7 +2682,7 @@ Evalúa en máximo 4 párrafos concisos:
       const card = deck[currentCardIndex];
       if (!card) return;
       if (!confirm(`¿Eliminar esta tarjeta de "${card.tag}"? Esta acción no se puede deshacer.`)) return;
-      flashcards = flashcards.filter(c => c.id !== card.id);
+      flashcards = flashcards.filter(c => String(c.id) !== String(card.id));
       saveData('flashcards');
       const newDeck = getFilteredFlashcards();
       if (currentCardIndex >= newDeck.length) currentCardIndex = 0;
@@ -2699,7 +2699,7 @@ Evalúa en máximo 4 párrafos concisos:
       if (!tag || !front || !back) return;
 
       if (editingCardId !== null) {
-        const card = flashcards.find(c => c.id === editingCardId);
+        const card = flashcards.find(c => String(c.id) === String(editingCardId));
         if (card) {
           card.tag = tag;
           card.topic = topic;
@@ -2722,7 +2722,7 @@ Evalúa en máximo 4 párrafos concisos:
       toggleCardModal(false);
 
       const deck = getFilteredFlashcards();
-      const idx = deck.findIndex(c => c.id === newCard.id);
+      const idx = deck.findIndex(c => String(c.id) === String(newCard.id));
       currentCardIndex = idx === -1 ? 0 : idx;
       renderFlashcards();
     }
@@ -3140,7 +3140,7 @@ Evalúa en máximo 4 párrafos concisos:
 
     function jumpToFlashcard(cardId) {
       const deck = getFilteredFlashcards();
-      const idx = deck.findIndex(c => c.id === cardId);
+      const idx = deck.findIndex(c => String(c.id) === String(cardId));
       if (idx === -1) {
         alert('Esa flashcard no está pendiente de repaso hoy (o no coincide con el filtro de núcleo actual).');
         return;
