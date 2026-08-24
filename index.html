@@ -1690,7 +1690,8 @@ Evalúa en máximo 4 párrafos concisos:
       loadedSources = loadedSources.filter(s => String(s.id) !== String(id));
       renderSourcesList();
       if (supabaseClient && currentUser) {
-        try { await supabaseClient.from('notebook_sources').delete().eq('id', id); } catch (err) {}
+        const { error } = await supabaseClient.from('notebook_sources').delete().eq('id', id).eq('user_id', currentUser.id);
+        if (error) alert('No se pudo borrar en la nube: ' + error.message + '\n\nRevisa que exista una política RLS de DELETE en la tabla notebook_sources.');
       }
     }
 
@@ -2693,13 +2694,21 @@ Evalúa en máximo 4 párrafos concisos:
       document.getElementById('card-modal').classList.remove('hidden');
     }
 
-    function deleteCurrentCard() {
+    async function deleteCurrentCard() {
       const deck = getFilteredFlashcards();
       const card = deck[currentCardIndex];
       if (!card) return;
       if (!confirm(`¿Eliminar esta tarjeta de "${card.tag}"? Esta acción no se puede deshacer.`)) return;
       flashcards = flashcards.filter(c => String(c.id) !== String(card.id));
-      saveData('flashcards');
+      localStorage.setItem('study_cards', JSON.stringify(flashcards));
+
+      if (supabaseClient && currentUser) {
+        const { error } = await supabaseClient.from('flashcards').delete().eq('id', card.id).eq('user_id', currentUser.id);
+        if (error) {
+          alert('No se pudo borrar la tarjeta en la nube (quedará local y puede reaparecer al recargar). Detalle: ' + error.message + '\n\nRevisa en Supabase que exista una política RLS de DELETE para la tabla flashcards.');
+        }
+      }
+
       const newDeck = getFilteredFlashcards();
       if (currentCardIndex >= newDeck.length) currentCardIndex = 0;
       renderFlashcards();
@@ -2733,18 +2742,24 @@ Evalúa en máximo 4 párrafos concisos:
 
       const removeIds = new Set(toRemove.map(c => String(c.id)));
       flashcards = flashcards.filter(c => !removeIds.has(String(c.id)));
-      saveData('flashcards');
+      localStorage.setItem('study_cards', JSON.stringify(flashcards));
 
+      let failCount = 0;
       if (supabaseClient && currentUser) {
         for (const c of toRemove) {
-          try { await supabaseClient.from('flashcards').delete().eq('id', c.id).eq('user_id', currentUser.id); } catch (err) {}
+          const { error } = await supabaseClient.from('flashcards').delete().eq('id', c.id).eq('user_id', currentUser.id);
+          if (error) failCount++;
         }
       }
 
       currentCardIndex = 0;
       renderFlashcards();
       if (progressPanelOpen) renderProgressPanel();
-      alert(`Listo — se quitaron ${toRemove.length} tarjeta(s) duplicada(s).`);
+      if (failCount > 0) {
+        alert(`Se quitaron ${toRemove.length - failCount} de ${toRemove.length} duplicados. ${failCount} no se pudieron borrar en la nube (revisa que exista una política RLS de DELETE en la tabla flashcards) y podrían reaparecer al recargar.`);
+      } else {
+        alert(`Listo — se quitaron ${toRemove.length} tarjeta(s) duplicada(s).`);
+      }
     }
 
     function handleCreateManualCard(e) {
