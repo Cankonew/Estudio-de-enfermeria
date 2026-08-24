@@ -1439,7 +1439,7 @@ graph TD
     function sendCurrentStructureToFlashcards() {
       const st = bioDigitalDB[activeBioSystemKey].structures[currentStructureIndex];
       const newCard = {
-        id: Date.now(),
+        id: genId(),
         tag: st.type,
         front: `¿Cuál es la inervación, acción y relevancia clínica de ${st.name}?`,
         back: `• Inervación: ${st.innervation}
@@ -1956,7 +1956,7 @@ Evalúa en máximo 4 párrafos concisos:
             const k = [(c.tag || '').trim().toLowerCase(), (c.front || '').trim().toLowerCase()].join('|');
             if (existingKeys.has(k)) { skipped++; return; }
             existingKeys.add(k);
-            const card = { ...c, id: Date.now() + Math.random(), semester: currentSemester, box: 1, nextReview: todayISO() };
+            const card = { ...c, id: genId(), semester: currentSemester, box: 1, nextReview: todayISO() };
             flashcards.push(card);
             addedCards.push(card);
           });
@@ -2151,6 +2151,16 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     // --- GESTIÓN DE DATOS & SUPABASE ---
+    // Genera un ID único como TEXTO, no como número flotante. Usar Date.now()+Math.random()
+    // como id de float8 fue la causa real de las tarjetas que no se dejaban borrar/editar
+    // y "reaparecían": Date.now() ya ocupa 13 dígitos, dejando muy poca precisión decimal
+    // disponible en un double (float8) para la parte aleatoria — dos tarjetas creadas cerca
+    // en el tiempo podían terminar con IDs prácticamente idénticos o colisionando.
+    function genId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+    }
+
     let flashcards = JSON.parse(localStorage.getItem('study_cards')) || [
       { id: 1, tag: 'Miología', front: '¿Cuáles son los 4 músculos del manguito rotador y su regla mnemotécnica?', back: 'Regla SIRS: Supraespinoso, Infraespinoso, Redondo menor y Subescapular.' }
     ];
@@ -2738,9 +2748,15 @@ Evalúa en máximo 4 párrafos concisos:
       localStorage.setItem('study_cards', JSON.stringify(flashcards));
 
       if (supabaseClient && currentUser) {
-        const { error } = await supabaseClient.from('flashcards').delete().eq('id', card.id).eq('user_id', currentUser.id);
+        const { data, error } = await supabaseClient.from('flashcards').delete().eq('id', card.id).eq('user_id', currentUser.id).select();
         if (error) {
           alert('No se pudo borrar la tarjeta en la nube (quedará local y puede reaparecer al recargar). Detalle: ' + error.message + '\n\nRevisa en Supabase que exista una política RLS de DELETE para la tabla flashcards.');
+        } else if (!data || data.length === 0) {
+          // Supabase respondió "OK" pero el filtro no encontró ninguna fila con ese id —
+          // la tarjeta que ves en pantalla no coincide con lo que hay realmente en la base
+          // de datos (posible desfase de id entre lo cargado y lo guardado).
+          alert('Aviso: Supabase no encontró ninguna fila con ese ID para borrar (posible desfase de datos). Revisa la tabla flashcards manualmente para esta tarjeta: id ' + card.id);
+          console.warn('DELETE de flashcard no coincidió con ninguna fila. id enviado:', card.id, typeof card.id);
         }
       }
 
@@ -2782,8 +2798,11 @@ Evalúa en máximo 4 párrafos concisos:
       let failCount = 0;
       if (supabaseClient && currentUser) {
         for (const c of toRemove) {
-          const { error } = await supabaseClient.from('flashcards').delete().eq('id', c.id).eq('user_id', currentUser.id);
-          if (error) failCount++;
+          const { data, error } = await supabaseClient.from('flashcards').delete().eq('id', c.id).eq('user_id', currentUser.id).select();
+          if (error || !data || data.length === 0) {
+            failCount++;
+            console.warn('DELETE de duplicado no confirmado. id:', c.id, 'error:', error);
+          }
         }
       }
 
@@ -2824,7 +2843,7 @@ Evalúa en máximo 4 párrafos concisos:
         return;
       }
 
-      const newCard = { id: Date.now() + Math.random(), tag, topic, front, back, semester: currentSemester, box: 1, nextReview: todayISO() };
+      const newCard = { id: genId(), tag, topic, front, back, semester: currentSemester, box: 1, nextReview: todayISO() };
       flashcards.push(newCard);
       saveData('flashcards');
       upsertFlashcardToCloud(newCard);
