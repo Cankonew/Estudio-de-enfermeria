@@ -325,6 +325,14 @@
               <input type="file" id="pdf-file-input" accept="application/pdf,image/*" multiple class="hidden" onchange="handlePDFUpload(event)">
             </div>
 
+            <div class="flex items-center gap-1.5">
+              <input type="text" id="pdf-upload-subject" list="pdf-subject-suggestions" placeholder="Materia (ej. Farmacología) — opcional" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 text-slate-200 text-[11px] rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-indigo-500">
+              <datalist id="pdf-subject-suggestions"></datalist>
+            </div>
+            <p class="text-[10px] text-slate-500 -mt-1.5">Se asigna a los próximos archivos que subas. Son materiales complementarios al caso, no tienen que coincidir exacto con el núcleo.</p>
+
+            <div id="pdf-subject-filter" class="flex flex-wrap gap-1.5"></div>
+
             <div id="pdf-sources-list" class="space-y-1.5"></div>
 
             <div class="space-y-2 pt-1">
@@ -989,7 +997,11 @@ graph TD
         <div id="card-viewport" class="hidden space-y-6">
           <div class="flex justify-between text-xs text-slate-400 font-semibold px-2">
             <span id="deck-progress">Tarjeta 1 de 1</span>
-            <span id="card-tag" class="text-indigo-400 uppercase tracking-wider">Materia</span>
+            <div class="flex items-center gap-2">
+              <span id="card-tag" class="text-indigo-400 uppercase tracking-wider">Materia</span>
+              <button onclick="editCurrentCard()" class="text-slate-500 hover:text-indigo-400" title="Editar esta tarjeta"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="deleteCurrentCard()" class="text-slate-500 hover:text-rose-400" title="Eliminar esta tarjeta"><i class="fa-solid fa-trash"></i></button>
+            </div>
           </div>
 
           <div onclick="flipCurrentCard()" class="perspective w-full h-72 cursor-pointer select-none">
@@ -1044,7 +1056,7 @@ graph TD
   <div id="card-modal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-clone text-indigo-400"></i> Nueva Flashcard</h3>
+        <h3 id="card-modal-title" class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-clone text-indigo-400"></i> Nueva Flashcard</h3>
         <button onclick="toggleCardModal(false)" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <form onsubmit="handleCreateManualCard(event)" class="space-y-3">
@@ -1064,7 +1076,7 @@ graph TD
           <button type="button" onclick="toggleCardModal(false)" class="px-4 py-2 text-xs text-slate-400 hover:text-white transition">
             Cancelar
           </button>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30">
+          <button type="submit" id="card-modal-submit-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-xs transition shadow-lg shadow-indigo-600/30">
             Guardar Tarjeta
           </button>
         </div>
@@ -1626,24 +1638,32 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     // --- CARGA DE PDF & NOTEBOOK IA ---
+    // Cada fuente puede llevar un `subject` (materia) libre, definida por el usuario —
+    // no corresponde a materias formales de Unisanitas, es solo su propia organización
+    // de guías/PDF complementarios. `activeSubjects` controla cuáles quedan disponibles
+    // para las acciones de IA (si es null, todas están activas).
+    let activeSubjects = null;
+
     function handlePDFUpload(e) {
       const files = Array.from(e.target.files || []);
       if (files.length === 0) return;
 
+      const subject = document.getElementById('pdf-upload-subject').value.trim() || 'Sin materia';
+
       files.forEach(file => {
-        const source = { id: Date.now() + Math.random(), name: file.name, mimeType: file.type || 'application/pdf', base64: null };
+        const source = { id: Date.now() + Math.random(), name: file.name, mimeType: file.type || 'application/pdf', base64: null, subject };
         loadedSources.push(source);
 
         const reader = new FileReader();
         reader.onload = async function(evt) {
           source.base64 = evt.target.result.split(',')[1];
-          appendChatMessage('system', `📄 Documento <strong>${file.name}</strong> cargado con éxito. Ahora puedes generar casos, flashcards o consultar directamente sobre todas tus fuentes.`);
+          appendChatMessage('system', `📄 Documento <strong>${file.name}</strong> (${subject}) cargado con éxito. Ahora puedes generar casos, flashcards o consultar directamente sobre todas tus fuentes.`);
 
           if (supabaseClient && currentUser) {
             try {
               await supabaseClient.from('notebook_sources').upsert({
                 id: source.id, user_id: currentUser.id, name: source.name,
-                mime_type: source.mimeType, base64: source.base64
+                mime_type: source.mimeType, base64: source.base64, subject: source.subject
               });
             } catch (err) {}
           }
@@ -1663,17 +1683,76 @@ Evalúa en máximo 4 párrafos concisos:
       }
     }
 
+    async function renameSourceSubject(id) {
+      const source = loadedSources.find(s => s.id === id);
+      if (!source) return;
+      const next = prompt('Materia para este documento:', source.subject || 'Sin materia');
+      if (next === null) return;
+      source.subject = next.trim() || 'Sin materia';
+      renderSourcesList();
+      if (supabaseClient && currentUser) {
+        try { await supabaseClient.from('notebook_sources').update({ subject: source.subject }).eq('id', id); } catch (err) {}
+      }
+    }
+
+    function toggleSubjectFilter(subject) {
+      const allSubjects = [...new Set(loadedSources.map(s => s.subject || 'Sin materia'))];
+      if (activeSubjects === null) activeSubjects = new Set(allSubjects);
+      if (activeSubjects.has(subject)) activeSubjects.delete(subject);
+      else activeSubjects.add(subject);
+      renderSourcesList();
+    }
+
+    function isSubjectActive(subject) {
+      return activeSubjects === null || activeSubjects.has(subject);
+    }
+
     function renderSourcesList() {
       const list = document.getElementById('pdf-sources-list');
       const badge = document.getElementById('pdf-status-badge');
       const label = document.getElementById('pdf-file-name');
+      const filterBar = document.getElementById('pdf-subject-filter');
+      const subjectSuggestions = document.getElementById('pdf-subject-suggestions');
 
-      list.innerHTML = loadedSources.map(s => `
-        <div class="flex items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5">
-          <span class="text-[11px] text-slate-300 truncate flex items-center gap-1.5">
-            <i class="fa-solid fa-file-pdf text-rose-500"></i> ${s.name}
-          </span>
-          <button onclick="removeSource(${s.id})" class="text-slate-500 hover:text-rose-400 shrink-0"><i class="fa-solid fa-xmark"></i></button>
+      const subjects = [...new Set(loadedSources.map(s => s.subject || 'Sin materia'))].sort();
+
+      if (subjectSuggestions) {
+        subjectSuggestions.innerHTML = subjects.map(s => `<option value="${s}"></option>`).join('');
+      }
+
+      // Chips de filtro por materia — solo se muestran si hay más de una.
+      if (filterBar) {
+        filterBar.innerHTML = subjects.length > 1 ? subjects.map(s => `
+          <button onclick="toggleSubjectFilter('${s.replace(/'/g, "\\'")}')" class="px-2 py-1 rounded-full text-[10px] font-bold border transition ${isSubjectActive(s) ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 text-slate-500 border-slate-800'}">
+            ${s}
+          </button>
+        `).join('') : '';
+      }
+
+      // Agrupa la lista visualmente por materia, respetando el filtro activo.
+      const grouped = {};
+      loadedSources.forEach(s => {
+        const subj = s.subject || 'Sin materia';
+        if (!grouped[subj]) grouped[subj] = [];
+        grouped[subj].push(s);
+      });
+
+      list.innerHTML = Object.keys(grouped).sort().map(subj => `
+        <div class="pt-1 first:pt-0">
+          <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1 mb-1 flex items-center gap-1.5">
+            ${subj} ${!isSubjectActive(subj) ? '<span class="text-slate-600">(inactiva)</span>' : ''}
+          </p>
+          ${grouped[subj].map(s => `
+            <div class="flex items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 ${!isSubjectActive(subj) ? 'opacity-40' : ''}">
+              <span class="text-[11px] text-slate-300 truncate flex items-center gap-1.5">
+                <i class="fa-solid fa-file-pdf text-rose-500"></i> ${s.name}
+              </span>
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="renameSourceSubject(${s.id})" class="text-slate-500 hover:text-indigo-400" title="Cambiar materia"><i class="fa-solid fa-tag"></i></button>
+                <button onclick="removeSource(${s.id})" class="text-slate-500 hover:text-rose-400" title="Quitar"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+            </div>
+          `).join('')}
         </div>
       `).join('');
 
@@ -1744,7 +1823,7 @@ Evalúa en máximo 4 párrafos concisos:
         return null;
       }
 
-      const readySources = loadedSources.filter(s => s.base64);
+      const readySources = loadedSources.filter(s => s.base64 && isSubjectActive(s.subject || 'Sin materia'));
       let instructions = promptText;
       if (readySources.length > 0) {
         instructions += `\n\nTienes ${readySources.length} documento(s) adjunto(s) como fuentes: ${readySources.map(s => s.name).join(', ')}. Basa tu respuesta únicamente en el contenido de estos documentos y, cuando sea posible, indica de qué documento (por nombre) sale cada dato.`;
@@ -2453,7 +2532,7 @@ Evalúa en máximo 4 párrafos concisos:
 
         const { data: cloudSources } = await supabaseClient.from('notebook_sources').select('*').eq('user_id', currentUser.id);
         if (cloudSources && cloudSources.length > 0) {
-          loadedSources = cloudSources.map(s => ({ id: s.id, name: s.name, mimeType: s.mime_type, base64: s.base64 }));
+          loadedSources = cloudSources.map(s => ({ id: s.id, name: s.name, mimeType: s.mime_type, base64: s.base64, subject: s.subject || 'Sin materia' }));
           renderSourcesList();
           appendChatMessage('system', `☁️ Se restauraron ${loadedSources.length} fuente(s) de tu cuenta.`);
         }
@@ -2551,14 +2630,44 @@ Evalúa en máximo 4 párrafos concisos:
     // --- FLASHCARDS ---
     let currentCardIndex = 0;
     let isCardFlipped = false;
+    let editingCardId = null; // null = modal en modo "crear"; con valor = modal en modo "editar"
 
     function toggleCardModal(show) {
       document.getElementById('card-modal').classList.toggle('hidden', !show);
-      if (show) {
+      if (show && editingCardId === null) {
+        document.getElementById('card-modal-title').innerHTML = '<i class="fa-solid fa-clone text-indigo-400"></i> Nueva Flashcard';
+        document.getElementById('card-modal-submit-btn').textContent = 'Guardar Tarjeta';
         document.getElementById('new-card-tag').value = '';
         document.getElementById('new-card-front').value = '';
         document.getElementById('new-card-back').value = '';
       }
+      if (!show) editingCardId = null;
+    }
+
+    function editCurrentCard() {
+      const deck = getFilteredFlashcards();
+      const card = deck[currentCardIndex];
+      if (!card) return;
+      editingCardId = card.id;
+      document.getElementById('card-modal-title').innerHTML = '<i class="fa-solid fa-pen text-indigo-400"></i> Editar Flashcard';
+      document.getElementById('card-modal-submit-btn').textContent = 'Guardar Cambios';
+      document.getElementById('new-card-tag').value = card.tag || '';
+      document.getElementById('new-card-front').value = card.front || '';
+      document.getElementById('new-card-back').value = card.back || '';
+      document.getElementById('card-modal').classList.remove('hidden');
+    }
+
+    function deleteCurrentCard() {
+      const deck = getFilteredFlashcards();
+      const card = deck[currentCardIndex];
+      if (!card) return;
+      if (!confirm(`¿Eliminar esta tarjeta de "${card.tag}"? Esta acción no se puede deshacer.`)) return;
+      flashcards = flashcards.filter(c => c.id !== card.id);
+      saveData('flashcards');
+      const newDeck = getFilteredFlashcards();
+      if (currentCardIndex >= newDeck.length) currentCardIndex = 0;
+      renderFlashcards();
+      if (progressPanelOpen) renderProgressPanel();
     }
 
     function handleCreateManualCard(e) {
@@ -2567,6 +2676,23 @@ Evalúa en máximo 4 párrafos concisos:
       const front = document.getElementById('new-card-front').value.trim();
       const back = document.getElementById('new-card-back').value.trim();
       if (!tag || !front || !back) return;
+
+      if (editingCardId !== null) {
+        const card = flashcards.find(c => c.id === editingCardId);
+        if (card) {
+          card.tag = tag;
+          card.front = front;
+          card.back = back;
+          // Nota: box y nextReview NO se tocan al editar — corregir el texto de una
+          // tarjeta no debería resetear tu progreso de repetición espaciada en ella.
+          saveData('flashcards');
+        }
+        editingCardId = null;
+        toggleCardModal(false);
+        renderFlashcards();
+        if (progressPanelOpen) renderProgressPanel();
+        return;
+      }
 
       const newCard = { id: Date.now() + Math.random(), tag, front, back, semester: currentSemester, box: 1, nextReview: todayISO() };
       flashcards.push(newCard);
@@ -3166,7 +3292,7 @@ Evalúa en máximo 4 párrafos concisos:
       const parts = [{ text: promptText }];
 
       if (tutorMode === 'docs') {
-        const readySources = loadedSources.filter(s => s.base64);
+        const readySources = loadedSources.filter(s => s.base64 && isSubjectActive(s.subject || 'Sin materia'));
         if (readySources.length === 0) {
           return 'No tienes documentos cargados en Notebook IA todavía. Sube un PDF ahí primero, o cambia a "Modo Libre" para conversar sin documentos.';
         }
