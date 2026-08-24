@@ -326,18 +326,47 @@
 
             <div class="space-y-2 pt-1">
               <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Acciones Rápidas:</label>
-              <button onclick="askPDFAction('cases')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-stethoscope text-emerald-400"></i> Crear 2 Casos Clínicos del PDF
-              </button>
-              <button onclick="askPDFAction('flashcards')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-clone text-indigo-400"></i> Generar 4 Flashcards del PDF
-              </button>
+
+              <div class="flex gap-1.5">
+                <button onclick="askPDFAction('cases')" class="flex-1 min-w-0 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-stethoscope text-emerald-400 shrink-0"></i> <span id="btn-pdf-cases-label" class="truncate">Crear 2 Casos Clínicos del PDF</span>
+                </button>
+                <select id="qty-pdf-cases" onchange="setPDFActionQty('cases', this.value)" class="shrink-0 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-1.5 focus:outline-none focus:border-indigo-500" title="Cantidad de casos clínicos">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="5">5</option>
+                </select>
+              </div>
+
+              <div class="flex gap-1.5">
+                <button onclick="askPDFAction('flashcards')" class="flex-1 min-w-0 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-clone text-indigo-400 shrink-0"></i> <span id="btn-pdf-flashcards-label" class="truncate">Generar 4 Flashcards del PDF</span>
+                </button>
+                <select id="qty-pdf-flashcards" onchange="setPDFActionQty('flashcards', this.value)" class="shrink-0 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-1.5 focus:outline-none focus:border-indigo-500" title="Cantidad de flashcards">
+                  <option value="2">2</option>
+                  <option value="4">4</option>
+                  <option value="6">6</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+
               <button onclick="askPDFAction('pae')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-notes-medical text-rose-400"></i> Extraer Plan PAE (NANDA-NIC)
               </button>
-              <button onclick="askPDFAction('quiz')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-                <i class="fa-solid fa-list-check text-teal-400"></i> Generar 5 Preguntas del PDF
-              </button>
+
+              <div class="flex gap-1.5">
+                <button onclick="askPDFAction('quiz')" class="flex-1 min-w-0 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-list-check text-teal-400 shrink-0"></i> <span id="btn-pdf-quiz-label" class="truncate">Generar 5 Preguntas del PDF</span>
+                </button>
+                <select id="qty-pdf-quiz" onchange="setPDFActionQty('quiz', this.value)" class="shrink-0 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-1.5 focus:outline-none focus:border-indigo-500" title="Cantidad de preguntas">
+                  <option value="3">3</option>
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                </select>
+              </div>
+
               <button onclick="askPDFAction('summary')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-brain text-amber-400"></i> Resumen para Examen Oral
               </button>
@@ -1752,6 +1781,29 @@ Evalúa en máximo 4 párrafos concisos:
       return data.candidates[0].content.parts[0].text;
     }
 
+    // --- CANTIDAD DE CADA ACCIÓN RÁPIDA DEL NOTEBOOK IA (recordada por tipo) ---
+    const PDF_ACTION_QTY_DEFAULTS = { cases: 2, flashcards: 4, quiz: 5 };
+    let pdfActionQty = {};
+    Object.keys(PDF_ACTION_QTY_DEFAULTS).forEach(type => {
+      const stored = parseInt(localStorage.getItem(`study_pdf_qty_${type}`));
+      pdfActionQty[type] = stored || PDF_ACTION_QTY_DEFAULTS[type];
+    });
+
+    function updatePDFActionQtyLabel(type) {
+      const qty = pdfActionQty[type];
+      const labelEl = document.getElementById(`btn-pdf-${type}-label`);
+      if (!labelEl) return;
+      if (type === 'cases') labelEl.textContent = `Crear ${qty} Caso${qty === 1 ? '' : 's'} Clínico${qty === 1 ? '' : 's'} del PDF`;
+      else if (type === 'flashcards') labelEl.textContent = `Generar ${qty} Flashcard${qty === 1 ? '' : 's'} del PDF`;
+      else if (type === 'quiz') labelEl.textContent = `Generar ${qty} Pregunta${qty === 1 ? '' : 's'} del PDF`;
+    }
+
+    function setPDFActionQty(type, qty) {
+      pdfActionQty[type] = parseInt(qty);
+      localStorage.setItem(`study_pdf_qty_${type}`, qty);
+      updatePDFActionQtyLabel(type);
+    }
+
     async function askPDFAction(action) {
       if (loadedSources.filter(s => s.base64).length === 0) {
         alert('Por favor selecciona primero al menos un archivo PDF tocando la zona de carga.');
@@ -1759,10 +1811,11 @@ Evalúa en máximo 4 párrafos concisos:
       }
 
       if (action === 'cases') {
-        appendChatMessage('user', 'Genera 2 casos clínicos de examen oral del PDF.');
+        const qty = pdfActionQty.cases;
+        appendChatMessage('user', `Genera ${qty} casos clínicos de examen oral del PDF.`);
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Analizando el documento...');
-        
-        const prompt = `${getNucleoContextForIA()} Genera exactamente 2 casos clínicos de examen oral basados en el documento adjunto. En el campo "category" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
+
+        const prompt = `${getNucleoContextForIA()} Genera exactamente ${qty} casos clínicos de examen oral basados en el documento adjunto. En el campo "category" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
 [{"category":"Tema","vignette":"Historia...","question":"Pregunta...","answer":"Respuesta...","keyPoints":"Puntos"}]`;
         try {
           const text = await callGeminiWithPDF(prompt);
@@ -1776,10 +1829,11 @@ Evalúa en máximo 4 párrafos concisos:
         }
 
       } else if (action === 'flashcards') {
-        appendChatMessage('user', 'Crea 4 Flashcards de alto rendimiento de este PDF.');
+        const qty = pdfActionQty.flashcards;
+        appendChatMessage('user', `Crea ${qty} Flashcards de alto rendimiento de este PDF.`);
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Extrayendo flashcards...');
 
-        const prompt = `${getNucleoContextForIA()} Crea 4 flashcards basadas en el documento adjunto. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
+        const prompt = `${getNucleoContextForIA()} Crea exactamente ${qty} flashcards basadas en el documento adjunto. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
 [{"tag":"Tema","front":"¿Pregunta?","back":"Respuesta"}]`;
         try {
           const text = await callGeminiWithPDF(prompt);
@@ -1795,10 +1849,11 @@ Evalúa en máximo 4 párrafos concisos:
       } else if (action === 'pae') {
         generateAIPAEPlan();
       } else if (action === 'quiz') {
-        appendChatMessage('user', 'Genera 5 preguntas de opción múltiple de este PDF para el Banco de Preguntas.');
+        const qty = pdfActionQty.quiz;
+        appendChatMessage('user', `Genera ${qty} preguntas de opción múltiple de este PDF para el Banco de Preguntas.`);
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-teal-400"></i> Generando preguntas...');
 
-        const prompt = `${getNucleoContextForIA()} Genera exactamente 5 preguntas de opción múltiple tipo examen basadas en el documento adjunto. Cada pregunta debe tener 4 opciones y solo una correcta. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
+        const prompt = `${getNucleoContextForIA()} Genera exactamente ${qty} preguntas de opción múltiple tipo examen basadas en el documento adjunto. Cada pregunta debe tener 4 opciones y solo una correcta. En el campo "tag" usa un tema o subtema clínico específico del contenido del PDF (no el nombre del núcleo completo). ${GEMINI_JSON_STRICT_INSTRUCTION} Formato JSON:
 [{"tag":"Tema","question":"¿Pregunta?","options":["Opción A","Opción B","Opción C","Opción D"],"correctIndex":0}]`;
         try {
           const text = await callGeminiWithPDF(prompt);
@@ -3015,6 +3070,11 @@ Evalúa en máximo 4 párrafos concisos:
       applyVisibleTabsToNav();
       if (!visibleTabs.includes(currentTab)) switchTab(visibleTabs[0]);
       updateTutorSpeakToggleUI();
+      Object.keys(PDF_ACTION_QTY_DEFAULTS).forEach(type => {
+        const select = document.getElementById(`qty-pdf-${type}`);
+        if (select) select.value = pdfActionQty[type];
+        updatePDFActionQtyLabel(type);
+      });
       setBioDigitalSystem('muscles');
       renderCurrentCase();
       updateTimerDisplay();
