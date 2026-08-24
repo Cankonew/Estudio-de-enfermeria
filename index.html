@@ -331,24 +331,14 @@
                 <button onclick="askPDFAction('cases')" class="flex-1 min-w-0 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                   <i class="fa-solid fa-stethoscope text-emerald-400 shrink-0"></i> <span id="btn-pdf-cases-label" class="truncate">Crear 2 Casos Clínicos del PDF</span>
                 </button>
-                <select id="qty-pdf-cases" onchange="setPDFActionQty('cases', this.value)" class="shrink-0 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-1.5 focus:outline-none focus:border-indigo-500" title="Cantidad de casos clínicos">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="5">5</option>
-                </select>
+                <input type="number" id="qty-pdf-cases" min="1" max="20" value="2" oninput="handlePDFQtyInput('cases')" class="shrink-0 w-[60px] bg-slate-950 border border-slate-700 text-white text-xs font-bold text-center rounded-xl focus:outline-none focus:border-indigo-500" title="Cantidad de casos clínicos (1-20)">
               </div>
 
               <div class="flex gap-1.5">
                 <button onclick="askPDFAction('flashcards')" class="flex-1 min-w-0 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                   <i class="fa-solid fa-clone text-indigo-400 shrink-0"></i> <span id="btn-pdf-flashcards-label" class="truncate">Generar 4 Flashcards del PDF</span>
                 </button>
-                <select id="qty-pdf-flashcards" onchange="setPDFActionQty('flashcards', this.value)" class="shrink-0 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-1.5 focus:outline-none focus:border-indigo-500" title="Cantidad de flashcards">
-                  <option value="2">2</option>
-                  <option value="4">4</option>
-                  <option value="6">6</option>
-                  <option value="10">10</option>
-                </select>
+                <input type="number" id="qty-pdf-flashcards" min="1" max="20" value="4" oninput="handlePDFQtyInput('flashcards')" class="shrink-0 w-[60px] bg-slate-950 border border-slate-700 text-white text-xs font-bold text-center rounded-xl focus:outline-none focus:border-indigo-500" title="Cantidad de flashcards (1-20)">
               </div>
 
               <button onclick="askPDFAction('pae')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
@@ -359,12 +349,7 @@
                 <button onclick="askPDFAction('quiz')" class="flex-1 min-w-0 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                   <i class="fa-solid fa-list-check text-teal-400 shrink-0"></i> <span id="btn-pdf-quiz-label" class="truncate">Generar 5 Preguntas del PDF</span>
                 </button>
-                <select id="qty-pdf-quiz" onchange="setPDFActionQty('quiz', this.value)" class="shrink-0 bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-1.5 focus:outline-none focus:border-indigo-500" title="Cantidad de preguntas">
-                  <option value="3">3</option>
-                  <option value="5">5</option>
-                  <option value="10">10</option>
-                  <option value="15">15</option>
-                </select>
+                <input type="number" id="qty-pdf-quiz" min="1" max="20" value="5" oninput="handlePDFQtyInput('quiz')" class="shrink-0 w-[60px] bg-slate-950 border border-slate-700 text-white text-xs font-bold text-center rounded-xl focus:outline-none focus:border-indigo-500" title="Cantidad de preguntas (1-20)">
               </div>
 
               <button onclick="askPDFAction('summary')" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
@@ -1783,14 +1768,29 @@ Evalúa en máximo 4 párrafos concisos:
 
     // --- CANTIDAD DE CADA ACCIÓN RÁPIDA DEL NOTEBOOK IA (recordada por tipo) ---
     const PDF_ACTION_QTY_DEFAULTS = { cases: 2, flashcards: 4, quiz: 5 };
+    const PDF_ACTION_QTY_MIN = 1;
+    const PDF_ACTION_QTY_MAX = 20;
+
     let pdfActionQty = {};
     Object.keys(PDF_ACTION_QTY_DEFAULTS).forEach(type => {
       const stored = parseInt(localStorage.getItem(`study_pdf_qty_${type}`));
-      pdfActionQty[type] = stored || PDF_ACTION_QTY_DEFAULTS[type];
+      pdfActionQty[type] = (stored >= PDF_ACTION_QTY_MIN && stored <= PDF_ACTION_QTY_MAX) ? stored : PDF_ACTION_QTY_DEFAULTS[type];
     });
 
+    // Vacío, 0 o no numérico -> valor por defecto de ese tipo; siempre limitado a 1-20.
+    function resolvePDFActionQty(type, rawValue) {
+      const n = parseInt(rawValue);
+      if (!n || n < PDF_ACTION_QTY_MIN) return PDF_ACTION_QTY_DEFAULTS[type];
+      return Math.min(n, PDF_ACTION_QTY_MAX);
+    }
+
+    function getPDFActionQty(type) {
+      const input = document.getElementById(`qty-pdf-${type}`);
+      return resolvePDFActionQty(type, input ? input.value : null);
+    }
+
     function updatePDFActionQtyLabel(type) {
-      const qty = pdfActionQty[type];
+      const qty = getPDFActionQty(type);
       const labelEl = document.getElementById(`btn-pdf-${type}-label`);
       if (!labelEl) return;
       if (type === 'cases') labelEl.textContent = `Crear ${qty} Caso${qty === 1 ? '' : 's'} Clínico${qty === 1 ? '' : 's'} del PDF`;
@@ -1798,8 +1798,10 @@ Evalúa en máximo 4 párrafos concisos:
       else if (type === 'quiz') labelEl.textContent = `Generar ${qty} Pregunta${qty === 1 ? '' : 's'} del PDF`;
     }
 
-    function setPDFActionQty(type, qty) {
-      pdfActionQty[type] = parseInt(qty);
+    // Se dispara en cada tecla (oninput) para reflejar el número en tiempo real en el botón.
+    function handlePDFQtyInput(type) {
+      const qty = getPDFActionQty(type);
+      pdfActionQty[type] = qty;
       localStorage.setItem(`study_pdf_qty_${type}`, qty);
       updatePDFActionQtyLabel(type);
     }
@@ -1811,7 +1813,7 @@ Evalúa en máximo 4 párrafos concisos:
       }
 
       if (action === 'cases') {
-        const qty = pdfActionQty.cases;
+        const qty = getPDFActionQty('cases');
         appendChatMessage('user', `Genera ${qty} casos clínicos de examen oral del PDF.`);
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Analizando el documento...');
 
@@ -1829,7 +1831,7 @@ Evalúa en máximo 4 párrafos concisos:
         }
 
       } else if (action === 'flashcards') {
-        const qty = pdfActionQty.flashcards;
+        const qty = getPDFActionQty('flashcards');
         appendChatMessage('user', `Crea ${qty} Flashcards de alto rendimiento de este PDF.`);
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Extrayendo flashcards...');
 
@@ -1849,7 +1851,7 @@ Evalúa en máximo 4 párrafos concisos:
       } else if (action === 'pae') {
         generateAIPAEPlan();
       } else if (action === 'quiz') {
-        const qty = pdfActionQty.quiz;
+        const qty = getPDFActionQty('quiz');
         appendChatMessage('user', `Genera ${qty} preguntas de opción múltiple de este PDF para el Banco de Preguntas.`);
         appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-teal-400"></i> Generando preguntas...');
 
@@ -3071,8 +3073,8 @@ Evalúa en máximo 4 párrafos concisos:
       if (!visibleTabs.includes(currentTab)) switchTab(visibleTabs[0]);
       updateTutorSpeakToggleUI();
       Object.keys(PDF_ACTION_QTY_DEFAULTS).forEach(type => {
-        const select = document.getElementById(`qty-pdf-${type}`);
-        if (select) select.value = pdfActionQty[type];
+        const input = document.getElementById(`qty-pdf-${type}`);
+        if (input) input.value = pdfActionQty[type];
         updatePDFActionQtyLabel(type);
       });
       setBioDigitalSystem('muscles');
