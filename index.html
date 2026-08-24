@@ -952,10 +952,21 @@ graph TD
             <option value="7">Sem VII: Cuidado al Niño, Adolescente y Familia</option>
             <option value="8">Sem VIII: Gerencia Integral del Cuidado</option>
           </select>
+          <button onclick="toggleProgressPanel()" id="btn-toggle-progress" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+            <i class="fa-solid fa-chart-simple"></i> <span class="hidden sm:inline">Progreso</span>
+          </button>
           <button onclick="toggleCardModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
             <i class="fa-solid fa-plus"></i> Crear Manual
           </button>
         </div>
+      </div>
+
+      <div id="progress-panel" class="hidden max-w-3xl mx-auto p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-chart-simple text-emerald-400"></i> Progreso por tema</h3>
+          <p class="text-[10px] text-slate-500">Basado en la caja Leitner de cada tarjeta (1 = más difícil, 5 = dominada)</p>
+        </div>
+        <div id="progress-panel-body" class="space-y-2"></div>
       </div>
 
       <div id="leitner-box-summary" class="max-w-xl mx-auto mb-4 flex flex-wrap justify-center gap-1.5 text-[11px] text-slate-400 font-semibold"></div>
@@ -2599,6 +2610,56 @@ Evalúa en máximo 4 párrafos concisos:
       `).join('');
     }
 
+    // --- DASHBOARD DE PROGRESO POR TEMA (agrupa las flashcards existentes por su `tag`) ---
+    // "Dominio" = promedio de caja Leitner del tema, escalado a 0-100%. No agrega datos
+    // nuevos: reutiliza el campo `box` que cada tarjeta ya tiene y ya sincroniza a Supabase.
+    let progressPanelOpen = false;
+    function toggleProgressPanel() {
+      progressPanelOpen = !progressPanelOpen;
+      document.getElementById('progress-panel').classList.toggle('hidden', !progressPanelOpen);
+      if (progressPanelOpen) renderProgressPanel();
+    }
+
+    function renderProgressPanel() {
+      const body = document.getElementById('progress-panel-body');
+      if (!body) return;
+
+      if (flashcards.length === 0) {
+        body.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Aún no tienes tarjetas para mostrar progreso.</p>';
+        return;
+      }
+
+      const byTag = {};
+      flashcards.forEach(c => {
+        const tag = c.tag || 'Sin categoría';
+        if (!byTag[tag]) byTag[tag] = { count: 0, boxSum: 0, struggling: 0, mastered: 0 };
+        const box = c.box || 1;
+        byTag[tag].count++;
+        byTag[tag].boxSum += box;
+        if (box <= 2) byTag[tag].struggling++;
+        if (box === 5) byTag[tag].mastered++;
+      });
+
+      const rows = Object.entries(byTag)
+        .map(([tag, s]) => ({ tag, ...s, mastery: Math.round(((s.boxSum / s.count - 1) / 4) * 100) }))
+        .sort((a, b) => a.mastery - b.mastery); // los temas más flojos primero
+
+      body.innerHTML = rows.map(r => {
+        const color = r.mastery < 40 ? 'bg-rose-500' : r.mastery < 75 ? 'bg-amber-500' : 'bg-emerald-500';
+        return `
+          <div class="p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl">
+            <div class="flex justify-between items-center mb-1.5 text-xs">
+              <span class="font-semibold text-slate-200">${r.tag}</span>
+              <span class="text-slate-400">${r.mastery}% dominio &bull; ${r.count} tarjeta${r.count === 1 ? '' : 's'}${r.struggling > 0 ? ` &bull; <span class="text-rose-400">${r.struggling} floja${r.struggling === 1 ? '' : 's'}</span>` : ''}</span>
+            </div>
+            <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full ${color}" style="width: ${Math.max(r.mastery, 3)}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     function renderFlashcards() {
       renderBoxSummary();
 
@@ -2660,6 +2721,7 @@ Evalúa en máximo 4 párrafos concisos:
       const newDeck = getFilteredFlashcards();
       if (currentCardIndex >= newDeck.length) currentCardIndex = 0;
       renderFlashcards();
+      if (progressPanelOpen) renderProgressPanel();
     }
 
     // --- POMODORO ---
