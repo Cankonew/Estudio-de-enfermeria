@@ -1408,11 +1408,9 @@ graph TD
     // ==========================================
     // --- RECONOCIMIENTO DE VOZ & EVALUADOR IA --
     // ==========================================
-    // voiceInputTarget indica a qué campo enrutar los resultados del reconocimiento
-    // compartido: 'oral' (Simulador Oral) o 'tutor' (Tutor IA). Se reutiliza la misma
-    // instancia de SpeechRecognition en vez de crear una nueva por función.
-    let voiceInputTarget = 'oral';
-
+    // `recognition` es exclusivo del Simulador Oral. El Tutor IA usa su propia
+    // instancia (`tutorRecognition`, definida más abajo) en vez de compartir esta,
+    // para no depender de reasignar callbacks/target entre pestañas.
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SpeechRec();
@@ -1425,41 +1423,13 @@ graph TD
         for (let i = event.resultIndex; i < event.results.length; i++) {
           transcript += event.results[i][0].transcript;
         }
-        if (voiceInputTarget === 'tutor') {
-          document.getElementById('tutor-user-input').value = transcript;
-        } else {
-          document.getElementById('oral-transcript-text').textContent = transcript;
-        }
-      };
-
-      recognition.onend = () => {
-        if (voiceInputTarget !== 'tutor') return;
-        isTutorSpeechActive = false;
-        updateTutorMicUI(false);
-        voiceInputTarget = 'oral';
-        const input = document.getElementById('tutor-user-input');
-        if (input && input.value.trim()) {
-          handleTutorMessage({ preventDefault: () => {} });
-        }
-      };
-
-      recognition.onerror = (event) => {
-        if (voiceInputTarget !== 'tutor') return;
-        isTutorSpeechActive = false;
-        updateTutorMicUI(false);
-        voiceInputTarget = 'oral';
-        if (event.error === 'not-allowed' || event.error === 'audio-capture') {
-          appendTutorMessage('tutor', '⚠️ No se pudo acceder al micrófono (revisa los permisos de tu navegador). Puedes seguir escribiendo tu pregunta normalmente.');
-        } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
-          appendTutorMessage('tutor', '⚠️ No se pudo reconocer tu voz. Puedes seguir escribiendo tu pregunta normalmente.');
-        }
+        document.getElementById('oral-transcript-text').textContent = transcript;
       };
     }
 
     function toggleOralTimerWithVoice() {
       toggleOralTimer();
       if (!recognition) return;
-      voiceInputTarget = 'oral';
       recognition.continuous = true;
       recognition.interimResults = true;
 
@@ -2768,33 +2738,67 @@ Evalúa en máximo 4 párrafos concisos:
       document.getElementById('btn-tutor-docs').className = `px-3 py-1.5 rounded-lg font-bold transition ${mode === 'docs' ? 'bg-violet-600 text-white' : 'text-slate-400 hover:text-white'}`;
     }
 
-    // --- VOZ DEL TUTOR IA (reutiliza el mismo `recognition` del Simulador Oral y speechSynthesis del Audio Repaso) ---
+    // --- VOZ DEL TUTOR IA ---
+    // Instancia propia de SpeechRecognition, independiente de la del Simulador Oral
+    // (más robusto que redirigir callbacks de una instancia compartida entre pestañas).
+    // Reutiliza speechSynthesis del Audio Repaso para la lectura en voz alta (más abajo).
+    let tutorRecognition = null;
     let isTutorSpeechActive = false;
 
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      tutorRecognition = new SpeechRec();
+      tutorRecognition.continuous = false;
+      tutorRecognition.interimResults = true;
+      tutorRecognition.lang = 'es-CO';
+
+      tutorRecognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        document.getElementById('tutor-user-input').value = transcript;
+      };
+
+      tutorRecognition.onend = () => {
+        isTutorSpeechActive = false;
+        updateTutorMicUI(false);
+        const input = document.getElementById('tutor-user-input');
+        if (input && input.value.trim()) {
+          handleTutorMessage({ preventDefault: () => {} });
+        }
+      };
+
+      tutorRecognition.onerror = (event) => {
+        isTutorSpeechActive = false;
+        updateTutorMicUI(false);
+        if (event.error === 'not-allowed' || event.error === 'audio-capture') {
+          appendTutorMessage('tutor', '⚠️ No se pudo acceder al micrófono (revisa los permisos de tu navegador). Puedes seguir escribiendo tu pregunta normalmente.');
+        } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+          appendTutorMessage('tutor', '⚠️ No se pudo reconocer tu voz. Puedes seguir escribiendo tu pregunta normalmente.');
+        }
+      };
+    }
+
     function toggleTutorVoiceInput() {
-      if (!recognition) {
+      if (!tutorRecognition) {
         appendTutorMessage('tutor', '⚠️ Tu navegador no soporta reconocimiento de voz (esto ocurre sobre todo en Safari/iOS). Puedes seguir escribiendo tu pregunta normalmente en el campo de texto.');
         return;
       }
 
       if (isTutorSpeechActive) {
-        recognition.stop();
-        return; // el estado y la UI se limpian en recognition.onend
+        tutorRecognition.stop();
+        return; // el estado y la UI se limpian en tutorRecognition.onend
       }
 
-      voiceInputTarget = 'tutor';
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'es-CO';
       document.getElementById('tutor-user-input').value = '';
 
       try {
-        recognition.start();
+        tutorRecognition.start();
         isTutorSpeechActive = true;
         updateTutorMicUI(true);
       } catch (err) {
         isTutorSpeechActive = false;
-        voiceInputTarget = 'oral';
         updateTutorMicUI(false);
       }
     }
