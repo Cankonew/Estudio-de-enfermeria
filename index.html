@@ -347,9 +347,31 @@
               Con mis Documentos
             </button>
           </div>
+          <button onclick="openTutorInstructionsModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 rounded-lg text-xs font-bold transition" title="Configura una sola vez cómo quieres que te enseñe el tutor">
+            <i class="fa-solid fa-sliders"></i> <span class="hidden sm:inline">Configurar Tutor</span>
+          </button>
+          <button onclick="startTutorInterrogador()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-300 border border-slate-700 rounded-lg text-xs font-bold transition" title="El tutor te hace preguntas abiertas (Active Recall) en vez de darte la respuesta">
+            <i class="fa-solid fa-brain"></i> <span class="hidden sm:inline">Interrogarme</span>
+          </button>
+          <button onclick="startTutorVerificacion()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 rounded-lg text-xs font-bold transition" title="Tú le explicas un tema al tutor con tus palabras y él evalúa qué te falta">
+            <i class="fa-solid fa-comment-dots"></i> <span class="hidden sm:inline">Evaluar mi explicación</span>
+          </button>
           <button onclick="toggleTutorSpeakMode()" id="btn-tutor-speak" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition text-xs border border-slate-700" title="Leer las respuestas del tutor en voz alta">
             🔊 Leer respuestas en voz alta
           </button>
+        </div>
+      </div>
+
+      <!-- Modal: Instrucciones Personalizadas del Tutor (P1) -->
+      <div id="tutor-instructions-modal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 max-w-lg w-full space-y-3 shadow-2xl">
+          <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-sliders text-indigo-400"></i> Configurar Tutor IA</h3>
+            <button onclick="document.getElementById('tutor-instructions-modal').classList.add('hidden')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+          </div>
+          <p class="text-xs text-slate-400">Se configura una sola vez y se aplica a todas tus conversaciones con el Tutor IA. Cuéntale tu nivel, objetivo y cómo te gusta que te expliquen.</p>
+          <textarea id="tutor-instructions-input" rows="6" placeholder="Ej: Soy estudiante de enfermería, 2do semestre, metodología ABP. Mi objetivo es entender a fondo, no solo memorizar. Cuando me expliques algo, usa el método Feynman con ejemplos reales y termina con una pregunta. Sé crítico con mis respuestas." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"></textarea>
+          <button onclick="saveTutorInstructions()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 rounded-xl text-sm transition">Guardar</button>
         </div>
       </div>
 
@@ -441,6 +463,14 @@
 
               <button onclick="askPDFAction('summary')" class="pdf-action-btn w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-brain text-amber-400"></i> Resumen para Examen Oral
+              </button>
+
+              <button onclick="askPDFAction('interrogador')" class="pdf-action-btn w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2" title="Preguntas abiertas tipo examen (Active Recall) — tú recuerdas, no reconoces">
+                <i class="fa-solid fa-brain text-teal-400"></i> El Interrogador (preguntas abiertas)
+              </button>
+
+              <button onclick="askPDFAction('verificacion')" class="pdf-action-btn w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2" title="Tú le explicas el tema con tus palabras y la IA evalúa qué te falta">
+                <i class="fa-solid fa-comment-dots text-amber-400"></i> Evaluar mi explicación
               </button>
             </div>
           </div>
@@ -1039,6 +1069,9 @@ graph TD
           <button onclick="toggleLearnMode()" id="btn-toggle-learn" class="bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0" title="Modo Aprender: opción múltiple con racha de aciertos">
             <i class="fa-solid fa-gamepad"></i> <span class="inline">Aprender</span>
           </button>
+          <button onclick="toggleMatchMode()" id="btn-toggle-match" class="bg-teal-950 hover:bg-teal-900 text-teal-300 border border-teal-800 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0" title="Modo Emparejar: encuentra las parejas pregunta-respuesta contra el reloj">
+            <i class="fa-solid fa-clone"></i> <span class="inline">Emparejar</span>
+          </button>
           <button onclick="toggleProgressPanel()" id="btn-toggle-progress" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0">
             <i class="fa-solid fa-chart-simple"></i> <span class="inline">Progreso</span>
           </button>
@@ -1100,6 +1133,21 @@ graph TD
             <div id="learn-streak-bar" class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
               <div id="learn-streak-bar-fill" class="h-full bg-amber-500 transition-all duration-300" style="width: 0%"></div>
             </div>
+          </div>
+        </div>
+
+        <!-- MODO EMPAREJAR: cartas boca abajo, encuentra pregunta+respuesta contra el reloj -->
+        <div id="match-mode-viewport" class="hidden space-y-4">
+          <div class="flex justify-between items-center text-xs font-semibold px-1">
+            <span id="match-timer" class="text-teal-400 flex items-center gap-1.5"><i class="fa-solid fa-stopwatch"></i> 0.0s</span>
+            <span id="match-best" class="text-slate-500">Mejor: —</span>
+            <button onclick="renderMatchGame()" class="text-slate-400 hover:text-white" title="Barajar de nuevo"><i class="fa-solid fa-shuffle"></i></button>
+          </div>
+          <div id="match-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+          <div id="match-complete-msg" class="hidden text-center py-6 bg-teal-950/30 border border-teal-800/50 rounded-2xl">
+            <i class="fa-solid fa-trophy text-3xl text-amber-400 mb-2"></i>
+            <p id="match-complete-text" class="text-sm font-bold text-teal-300"></p>
+            <button onclick="renderMatchGame()" class="mt-3 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Jugar de nuevo</button>
           </div>
         </div>
 
@@ -1327,7 +1375,10 @@ graph TD
 
     function getNucleoContextForIA() {
       const list = Object.entries(NUCLEOS_UNISANITAS).map(([num, name]) => `Semestre ${num} = "${name}"`).join('; ');
-      return `Contexto curricular: este estudiante cursa Enfermería en Unisanitas (Colombia), donde el plan de estudios es un currículo INTEGRADO POR NÚCLEOS TEMÁTICOS, no por asignaturas tradicionales (no existen materias sueltas como "Farmacología II" o "Fisiología I"; el contenido de cada semestre se aborda de forma integrada dentro de un único núcleo). Los 8 núcleos son: ${list}. El estudiante está cursando actualmente: "${getNucleoLabel(currentSemester)}". Alinea tus explicaciones, ejemplos y la forma de nombrar los temas a la lógica de núcleos integrados de Unisanitas, no a materias tradicionales sueltas.`;
+      const base = `Contexto curricular: este estudiante cursa Enfermería en Unisanitas (Colombia), donde el plan de estudios es un currículo INTEGRADO POR NÚCLEOS TEMÁTICOS, no por asignaturas tradicionales (no existen materias sueltas como "Farmacología II" o "Fisiología I"; el contenido de cada semestre se aborda de forma integrada dentro de un único núcleo). Los 8 núcleos son: ${list}. El estudiante está cursando actualmente: "${getNucleoLabel(currentSemester)}". Alinea tus explicaciones, ejemplos y la forma de nombrar los temas a la lógica de núcleos integrados de Unisanitas, no a materias tradicionales sueltas.`;
+      // P1 - Instrucciones Personalizadas: configuradas una sola vez en "Configurar Tutor",
+      // se inyectan en TODO prompt que use este contexto (Tutor IA y Notebook IA por igual).
+      return tutorInstructions ? `${base}\n\nInstrucciones adicionales del estudiante para toda la sesión (síguelas siempre): ${tutorInstructions}` : base;
     }
 
     // =========================================================================
@@ -2012,6 +2063,10 @@ Evalúa en máximo 4 párrafos concisos:
     // Evita que un doble clic (o una segunda pulsación mientras la IA aún responde)
     // dispare la generación dos veces y cree tarjetas/casos/preguntas duplicadas.
     let pdfActionInFlight = false;
+    // Cuando no es null, la próxima pregunta libre del usuario en el chat del Notebook
+    // se trata como su explicación de este tema (P5: Verificación de Comprensión) en
+    // vez de una pregunta normal — ver handlePDFUserQuery().
+    let pdfVerificacionPendingTopic = null;
 
     async function askPDFAction(action) {
       if (pdfActionInFlight) return;
@@ -2109,6 +2164,21 @@ Evalúa en máximo 4 párrafos concisos:
           const text = await callGeminiWithPDF(`${getNucleoContextForIA()} Devuelve una síntesis estructurada con los 5 puntos cardinales del PDF para examen oral.`);
           appendChatMessage('ai', text);
         } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+      } else if (action === 'interrogador') {
+        const cantidad = prompt('¿Cuántas preguntas abiertas quieres sobre este documento? (recomendado 5-10)', '8');
+        if (!cantidad) return;
+        appendChatMessage('user', `Hazme ${cantidad} preguntas abiertas sobre este documento como examen real.`);
+        appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Preparando preguntas...');
+        try {
+          const text = await callGeminiWithPDF(`${getNucleoContextForIA()} Hazme ${cantidad} preguntas abiertas sobre el contenido de este documento, como si fuera un examen real, de nivel fácil a difícil. No me des las respuestas todavía. Cuando yo responda cada una en el chat, dime: si es correcta, incorrecta o parcialmente correcta; qué me faltó; qué dije mal; qué puedo mejorar; y cita de qué parte del documento sale la respuesta correcta.`);
+          appendChatMessage('ai', text);
+        } catch (e) { appendChatMessage('ai', 'Error: ' + e.message); }
+      } else if (action === 'verificacion') {
+        const tema = prompt('¿Qué tema de este documento vas a explicar con tus propias palabras?');
+        if (!tema) return;
+        pdfVerificacionPendingTopic = tema;
+        appendChatMessage('user', `Voy a explicarte ${tema} con mis propias palabras.`);
+        appendChatMessage('ai', `Adelante, escribe tu explicación de <strong>${tema}</strong> en el cuadro de abajo — la voy a comparar con el documento y te digo qué te falta, qué entendiste mal y qué estás confundiendo. Sé estricto contigo mismo, esa es la idea.`);
       }
       } finally {
         pdfActionInFlight = false;
@@ -2126,8 +2196,14 @@ Evalúa en máximo 4 párrafos concisos:
       input.value = '';
       appendChatMessage('system', '<i class="fa-solid fa-spinner fa-spin text-indigo-400"></i> Consultando...');
 
+      let promptToSend = query;
+      if (pdfVerificacionPendingTopic) {
+        promptToSend = `${getNucleoContextForIA()} El estudiante va a explicarte "${pdfVerificacionPendingTopic}" con sus propias palabras, como si le enseñara a alguien que no sabe nada. Su explicación es: "${query}". Evalúalo del 1 al 10. Compara su explicación con lo que dice el documento adjunto. Dime: (1) qué entendió bien, (2) qué entendió mal, (3) qué le faltó mencionar, (4) qué conceptos está confundiendo. Sé estricto.`;
+        pdfVerificacionPendingTopic = null;
+      }
+
       try {
-        const text = await callGeminiWithPDF(query);
+        const text = await callGeminiWithPDF(promptToSend);
         appendChatMessage('ai', text);
       } catch (err) {
         appendChatMessage('ai', 'Error: ' + err.message);
@@ -2266,7 +2342,8 @@ Evalúa en máximo 4 párrafos concisos:
               semester: currentSemester,
               visible_tabs: visibleTabs,
               tutor_speak: tutorSpeakEnabled,
-              pdf_qty: pdfActionQty
+              pdf_qty: pdfActionQty,
+              tutor_instructions: tutorInstructions
             }
           });
         } catch (e) {}
@@ -2305,6 +2382,10 @@ Evalúa en máximo 4 párrafos concisos:
             updatePDFActionQtyLabel(type);
           }
         });
+      }
+      if (typeof prefs.tutor_instructions === 'string') {
+        tutorInstructions = prefs.tutor_instructions;
+        localStorage.setItem('study_tutor_instructions', tutorInstructions);
       }
     }
 
@@ -3104,6 +3185,7 @@ Evalúa en máximo 4 párrafos concisos:
 
       const container = document.getElementById('card-viewport');
       const learnContainer = document.getElementById('learn-mode-viewport');
+      const matchContainer = document.getElementById('match-mode-viewport');
       const noCards = document.getElementById('no-cards-msg');
       const allCaughtUp = document.getElementById('all-caught-up-msg');
 
@@ -3114,10 +3196,25 @@ Evalúa en máximo 4 párrafos concisos:
       if (totalInFilter === 0) {
         container.classList.add('hidden');
         learnContainer.classList.add('hidden');
+        matchContainer.classList.add('hidden');
         allCaughtUp.classList.add('hidden');
         noCards.classList.remove('hidden');
         return;
       }
+
+      // El Modo Emparejar no depende de qué tarjetas "tocan hoy" — es un juego de práctica,
+      // así que se salta el aviso de "ya repasaste todo" y usa el mazo completo del filtro.
+      if (matchModeActive) {
+        container.classList.add('hidden');
+        learnContainer.classList.add('hidden');
+        noCards.classList.add('hidden');
+        allCaughtUp.classList.add('hidden');
+        matchContainer.classList.remove('hidden');
+        renderMatchGame();
+        return;
+      }
+      matchContainer.classList.add('hidden');
+
       if (deck.length === 0) {
         container.classList.add('hidden');
         learnContainer.classList.add('hidden');
@@ -3212,12 +3309,157 @@ Evalúa en máximo 4 párrafos concisos:
 
     function toggleLearnMode() {
       learnModeActive = !learnModeActive;
+      if (learnModeActive && matchModeActive) { matchModeActive = false; updateMatchModeBtnUI(); }
       const btn = document.getElementById('btn-toggle-learn');
       btn.className = learnModeActive
         ? 'bg-indigo-600 text-white border border-indigo-500 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2'
         : 'bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2';
       learnStreak = 0;
       renderFlashcards();
+    }
+
+    // --- MODO EMPAREJAR (estilo Quizlet Match) ---
+    let matchModeActive = false;
+    let matchSelected = null; // { tileIndex, pairId, ... } de la primera carta volteada
+    let matchLocked = false;  // evita tocar más cartas mientras se resuelve una comparación
+    let matchTimerInterval = null;
+    let matchStartTime = null;
+    let matchPairsTotal = 0;
+    let matchPairsFound = 0;
+
+    function updateMatchModeBtnUI() {
+      const btn = document.getElementById('btn-toggle-match');
+      if (!btn) return;
+      btn.className = matchModeActive
+        ? 'bg-teal-600 text-white border border-teal-500 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0'
+        : 'bg-teal-950 hover:bg-teal-900 text-teal-300 border border-teal-800 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0';
+    }
+
+    function toggleMatchMode() {
+      matchModeActive = !matchModeActive;
+      if (matchModeActive && learnModeActive) {
+        learnModeActive = false;
+        const learnBtn = document.getElementById('btn-toggle-learn');
+        learnBtn.className = 'bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0';
+      }
+      updateMatchModeBtnUI();
+      renderFlashcards();
+    }
+
+    function stopMatchTimer() {
+      if (matchTimerInterval) clearInterval(matchTimerInterval);
+      matchTimerInterval = null;
+    }
+
+    // Arma un mazo nuevo de hasta 6 parejas (12 cartas) y lo baraja. Se puede llamar en
+    // cualquier momento (botón de barajar, o "Jugar de nuevo") para reiniciar la partida.
+    function renderMatchGame() {
+      stopMatchTimer();
+      document.getElementById('match-complete-msg').classList.add('hidden');
+
+      const filter = document.getElementById('flashcard-semester-filter')?.value || 'all';
+      let pool = filter === 'all' ? [...flashcards] : flashcards.filter(c => (c.semester || '2') === filter);
+      pool = pool.filter(c => (c.front || '').trim() && (c.back || '').trim());
+
+      if (pool.length < 2) {
+        document.getElementById('match-grid').innerHTML = '<p class="col-span-full text-center text-xs text-slate-500 py-8">Necesitas al menos 2 tarjetas con pregunta y respuesta para jugar.</p>';
+        return;
+      }
+
+      // Baraja el mazo y toma hasta 6 parejas al azar cada vez, para que el juego no
+      // se sienta repetitivo.
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      const chosen = shuffled.slice(0, Math.min(6, shuffled.length));
+      matchPairsTotal = chosen.length;
+      matchPairsFound = 0;
+
+      let tiles = [];
+      chosen.forEach(c => {
+        tiles.push({ pairId: c.id, text: c.front, matched: false });
+        tiles.push({ pairId: c.id, text: c.back, matched: false });
+      });
+      tiles = tiles.sort(() => Math.random() - 0.5);
+      matchTiles = tiles;
+      matchSelected = null;
+      matchLocked = false;
+
+      matchStartTime = Date.now();
+      matchTimerInterval = setInterval(() => {
+        const elapsed = (Date.now() - matchStartTime) / 1000;
+        document.getElementById('match-timer').innerHTML = `<i class="fa-solid fa-stopwatch"></i> ${elapsed.toFixed(1)}s`;
+      }, 100);
+
+      const bestKey = 'study_match_best_' + matchPairsTotal;
+      const best = localStorage.getItem(bestKey);
+      document.getElementById('match-best').textContent = best ? `Mejor: ${parseFloat(best).toFixed(1)}s` : 'Mejor: —';
+
+      renderMatchGrid();
+    }
+
+    let matchTiles = [];
+
+    function renderMatchGrid() {
+      const grid = document.getElementById('match-grid');
+      grid.innerHTML = matchTiles.map((t, i) => {
+        const isSelected = matchSelected && matchSelected.tileIndex === i;
+        let cls = 'match-tile min-h-[76px] p-2 rounded-xl border text-[11px] leading-snug flex items-center justify-center text-center cursor-pointer transition select-none ';
+        if (t.matched) cls += 'bg-emerald-950/40 border-emerald-700 text-emerald-400 opacity-40';
+        else if (isSelected) cls += 'bg-teal-900 border-teal-500 text-white';
+        else cls += 'bg-slate-900 border-slate-700 text-slate-200 hover:border-teal-600';
+        return `<div class="${cls}" onclick="matchSelectTile(${i})" data-tile-index="${i}">${t.text}</div>`;
+      }).join('');
+    }
+
+    function matchSelectTile(index) {
+      if (matchLocked) return;
+      const tile = matchTiles[index];
+      if (!tile || tile.matched) return;
+      if (matchSelected && matchSelected.tileIndex === index) return;
+
+      if (!matchSelected) {
+        matchSelected = { tileIndex: index };
+        renderMatchGrid();
+        return;
+      }
+
+      const first = matchTiles[matchSelected.tileIndex];
+      const second = tile;
+
+      if (first.pairId === second.pairId) {
+        first.matched = true;
+        second.matched = true;
+        matchSelected = null;
+        matchPairsFound++;
+        renderMatchGrid();
+        if (matchPairsFound >= matchPairsTotal) finishMatchGame();
+      } else {
+        matchLocked = true;
+        // Marca ambas en rojo un instante antes de voltearlas de nuevo boca abajo.
+        const grid = document.getElementById('match-grid');
+        [matchSelected.tileIndex, index].forEach(i => {
+          const el = grid.querySelector(`[data-tile-index="${i}"]`);
+          if (el) el.className = 'match-tile min-h-[76px] p-2 rounded-xl border text-[11px] leading-snug flex items-center justify-center text-center cursor-pointer transition select-none bg-rose-950/60 border-rose-600 text-rose-300';
+        });
+        setTimeout(() => {
+          matchSelected = null;
+          matchLocked = false;
+          renderMatchGrid();
+        }, 650);
+      }
+    }
+
+    function finishMatchGame() {
+      stopMatchTimer();
+      const elapsed = (Date.now() - matchStartTime) / 1000;
+      const bestKey = 'study_match_best_' + matchPairsTotal;
+      const best = localStorage.getItem(bestKey);
+      let msg = `¡Completado en ${elapsed.toFixed(1)}s!`;
+      if (!best || elapsed < parseFloat(best)) {
+        localStorage.setItem(bestKey, elapsed.toFixed(1));
+        msg += ' 🏆 ¡Nuevo mejor tiempo!';
+      }
+      document.getElementById('match-complete-text').textContent = msg;
+      document.getElementById('match-complete-msg').classList.remove('hidden');
     }
 
     // Arma 3 respuestas incorrectas plausibles tomando el "back" de otras tarjetas —
@@ -3723,7 +3965,13 @@ Evalúa en máximo 4 párrafos concisos:
       const userText = input.value.trim();
       if (!userText) return;
       input.value = '';
+      await sendTutorPrompt(userText);
+    }
 
+    // Envía un mensaje al Tutor IA como si el estudiante lo hubiera escrito — usado tanto
+    // por el formulario normal como por los botones de prompts predefinidos (Interrogador,
+    // Verificación de Comprensión), así ambos comparten el mismo historial y contexto.
+    async function sendTutorPrompt(userText) {
       appendTutorMessage('user', userText);
       tutorChatHistory.push({ role: 'user', text: userText });
 
@@ -3742,6 +3990,42 @@ Evalúa en máximo 4 párrafos concisos:
         document.getElementById(thinkingId)?.remove();
         appendTutorMessage('tutor', `⚠️ Error: ${err.message || 'No se pudo conectar con la IA.'}`);
       }
+    }
+
+    // --- P1: Instrucciones Personalizadas del Tutor ---
+    // Configuración fija (nivel, materia, objetivo, estilo) que se inyecta en TODAS las
+    // respuestas del Tutor IA, para no repetirla en cada pregunta.
+    let tutorInstructions = localStorage.getItem('study_tutor_instructions') || '';
+
+    function openTutorInstructionsModal() {
+      const textarea = document.getElementById('tutor-instructions-input');
+      textarea.value = tutorInstructions;
+      document.getElementById('tutor-instructions-modal').classList.remove('hidden');
+    }
+
+    function saveTutorInstructions() {
+      tutorInstructions = document.getElementById('tutor-instructions-input').value.trim();
+      localStorage.setItem('study_tutor_instructions', tutorInstructions);
+      document.getElementById('tutor-instructions-modal').classList.add('hidden');
+      syncPreferencesToCloud();
+    }
+
+    // --- P4: El Interrogador (Active Recall con preguntas abiertas) ---
+    function startTutorInterrogador() {
+      const tema = prompt('¿Sobre qué tema quieres que te pregunte?');
+      if (!tema) return;
+      const cantidad = prompt('¿Cuántas preguntas? (recomendado 5-10)', '8') || '8';
+      const texto = `Hazme ${cantidad} preguntas abiertas sobre ${tema} como si fuera un examen real, de nivel fácil a difícil. No me des las respuestas todavía. Cuando yo responda cada una, dime: si es correcta, incorrecta o parcialmente correcta; qué me faltó; qué dije mal; qué puedo mejorar; y cita la fuente donde está la respuesta correcta.`;
+      sendTutorPrompt(texto);
+    }
+
+    // --- P5: Verificación de Comprensión (el estudiante explica, la IA evalúa) ---
+    function startTutorVerificacion() {
+      const tema = prompt('¿Qué tema vas a explicar con tus propias palabras?');
+      if (!tema) return;
+      const texto = `Voy a explicarte ${tema} con mis propias palabras, como si le enseñara a alguien que no sabe nada. Evalúame del 1 al 10. Compara mi explicación con lo que dicen las fuentes. Dime: (1) qué entendí bien, (2) qué entendí mal, (3) qué me faltó mencionar, (4) qué conceptos estoy confundiendo. Sé estricto. Actúa como mi tutor.`;
+      sendTutorPrompt(texto);
+      appendTutorMessage('tutor', '✍️ Escribe tu explicación en el cuadro de abajo y envíala — te voy a evaluar con base en eso.');
     }
 
     async function callGeminiTutor() {
