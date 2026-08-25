@@ -76,7 +76,11 @@
       <!-- Barra de Pestañas -->
       <div id="main-nav-wrapper" class="hidden relative w-full">
         <nav id="main-nav" class="flex w-full bg-slate-950/80 p-1 rounded-xl border border-slate-800 overflow-x-auto gap-1">
-        <button onclick="switchTab('atlas')" id="nav-atlas" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap">
+        <button onclick="switchTab('inicio')" id="nav-inicio" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow whitespace-nowrap">
+          <i class="fa-solid fa-house text-indigo-300"></i>
+          <span>Inicio</span>
+        </button>
+        <button onclick="switchTab('atlas')" id="nav-atlas" class="tab-btn px-3 py-2 rounded-lg text-xs md:text-sm font-semibold transition flex items-center gap-2 text-slate-400 hover:text-white whitespace-nowrap">
           <i class="fa-solid fa-person-running text-rose-400"></i>
           <span>Atlas 3D</span>
         </button>
@@ -157,8 +161,78 @@
   <!-- Contenedor Principal -->
   <main id="main-content" class="hidden flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 space-y-6">
 
+    <!-- ==================== INICIO: DASHBOARD DE RUTINA DIARIA ==================== -->
+    <section id="view-inicio" class="space-y-5">
+      <div>
+        <h2 id="dashboard-greeting" class="text-2xl font-bold text-white">Hola</h2>
+        <p class="text-sm text-slate-400">Esto es lo que te conviene hacer hoy.</p>
+      </div>
+
+      <!-- Estado del día: turno o descansado, con la rutina sugerida -->
+      <div id="dashboard-routine-card" class="p-5 rounded-2xl border space-y-3">
+        <div class="flex items-center justify-between">
+          <span id="dashboard-routine-badge" class="text-xs font-bold uppercase px-3 py-1 rounded-full"></span>
+          <button onclick="toggleEnergyMode(); renderDashboard();" class="text-[11px] text-slate-400 hover:text-white underline">Cambiar</button>
+        </div>
+        <p id="dashboard-routine-text" class="text-sm text-slate-200 leading-relaxed"></p>
+      </div>
+
+      <!-- Tiempo Mínimo No Negociable: sesión ajustada al tiempo real que tienes hoy -->
+      <div class="p-5 rounded-2xl border border-slate-800 bg-slate-900/60 space-y-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-stopwatch text-amber-400"></i> Tiempo Mínimo No Negociable</h3>
+        <p class="text-xs text-slate-400">¿Cuántos minutos tienes de verdad hoy? Ajustamos tu sesión de repaso para que quepa exacto — nada de mazos que se sienten inalcanzables.</p>
+        <div class="flex items-center gap-2 flex-wrap">
+          <input type="number" id="tmnn-minutes" min="5" max="180" value="15" class="w-24 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white text-center focus:outline-none focus:border-indigo-500">
+          <span class="text-xs text-slate-400">minutos</span>
+          <button onclick="startTMNNSession()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 ml-auto">
+            <i class="fa-solid fa-play"></i> Empezar sesión
+          </button>
+        </div>
+      </div>
+
+      <!-- Estadísticas rápidas -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl text-center">
+          <p id="dashboard-stat-due" class="text-2xl font-bold text-white">0</p>
+          <p class="text-[11px] text-slate-400">tarjetas pendientes hoy</p>
+        </div>
+        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl text-center">
+          <p id="dashboard-stat-streak" class="text-2xl font-bold text-amber-400"><i class="fa-solid fa-fire"></i> 0</p>
+          <p class="text-[11px] text-slate-400">mejor racha</p>
+        </div>
+        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl text-center">
+          <p id="dashboard-stat-total" class="text-2xl font-bold text-white">0</p>
+          <p class="text-[11px] text-slate-400">tarjetas en total</p>
+        </div>
+        <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl text-center">
+          <p id="dashboard-stat-weak" class="text-sm font-bold text-rose-400 truncate">—</p>
+          <p class="text-[11px] text-slate-400">tema más flojo</p>
+        </div>
+      </div>
+
+      <!-- Accesos rápidos -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button onclick="switchTab('flashcards')" class="p-4 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-2xl text-left transition">
+          <i class="fa-solid fa-clone text-slate-300 mb-2"></i>
+          <p class="text-xs font-semibold text-white">Flashcards</p>
+        </button>
+        <button onclick="switchTab('notebook')" class="p-4 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-2xl text-left transition">
+          <i class="fa-solid fa-book-bookmark text-amber-300 mb-2"></i>
+          <p class="text-xs font-semibold text-white">Notebook IA</p>
+        </button>
+        <button onclick="switchTab('tutor')" class="p-4 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-2xl text-left transition">
+          <i class="fa-solid fa-chalkboard-user text-violet-400 mb-2"></i>
+          <p class="text-xs font-semibold text-white">Tutor IA</p>
+        </button>
+        <button onclick="switchTab('cases')" class="p-4 bg-slate-900/60 hover:bg-slate-800 border border-slate-800 rounded-2xl text-left transition">
+          <i class="fa-solid fa-file-waveform text-slate-300 mb-2"></i>
+          <p class="text-xs font-semibold text-white">Simulador Oral</p>
+        </button>
+      </div>
+    </section>
+
     <!-- ==================== 0. ATLAS 3D ANATÓMICO BIODIGITAL HUMAN ==================== -->
-    <section id="view-atlas" class="space-y-6">
+    <section id="view-atlas" class="hidden space-y-6">
       <div class="flex flex-wrap justify-between items-center gap-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
         <div>
           <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
@@ -2122,6 +2196,59 @@ Evalúa en máximo 4 párrafos concisos:
       setEnergyMode(energyMode === 'shift' ? 'rested' : 'shift');
     }
 
+    // --- DASHBOARD DE INICIO ---
+    function renderDashboard() {
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+      document.getElementById('dashboard-greeting').textContent = `${greeting}, Rafael`;
+
+      const routineCard = document.getElementById('dashboard-routine-card');
+      const badge = document.getElementById('dashboard-routine-badge');
+      const text = document.getElementById('dashboard-routine-text');
+
+      if (energyMode === 'shift') {
+        routineCard.className = 'p-5 rounded-2xl border border-amber-500/30 bg-amber-500/5 space-y-3';
+        badge.className = 'text-xs font-bold uppercase px-3 py-1 rounded-full bg-amber-500/20 text-amber-300';
+        badge.textContent = '🌙 Modo Turno — vienes sin dormir';
+        text.textContent = 'Hoy toca solo mantenimiento: repasa con tarjetas cortas, nada de contenido nuevo. Prioriza escuchar y participar en la discusión del caso ABP en clase — tu cerebro consolida poco hoy, así que no fuerces memorización nueva.';
+      } else {
+        routineCard.className = 'p-5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 space-y-3';
+        badge.className = 'text-xs font-bold uppercase px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300';
+        badge.textContent = '🔋 Modo Descansado — día de energía alta';
+        text.textContent = 'Aprovecha hoy para aprender contenido nuevo: bloques de 25-30 min con descansos de 5. Convierte lo que estudies en flashcards para repasar en tu próximo turno, y prepara a fondo tu parte del caso ABP.';
+      }
+
+      const deck = getFilteredFlashcards();
+      document.getElementById('dashboard-stat-due').textContent = deck.length;
+      document.getElementById('dashboard-stat-streak').innerHTML = `<i class="fa-solid fa-fire"></i> ${learnBestStreak}`;
+      document.getElementById('dashboard-stat-total').textContent = flashcards.length;
+
+      if (flashcards.length > 0) {
+        const byTag = {};
+        flashcards.forEach(c => {
+          const tag = c.tag || 'Sin categoría';
+          if (!byTag[tag]) byTag[tag] = { count: 0, boxSum: 0 };
+          byTag[tag].count++;
+          byTag[tag].boxSum += (c.box || 1);
+        });
+        const worst = Object.entries(byTag)
+          .map(([tag, s]) => ({ tag, mastery: (s.boxSum / s.count - 1) / 4 }))
+          .sort((a, b) => a.mastery - b.mastery)[0];
+        document.getElementById('dashboard-stat-weak').textContent = worst ? worst.tag : '—';
+      } else {
+        document.getElementById('dashboard-stat-weak').textContent = '—';
+      }
+    }
+
+    // Ajusta la sesión de repaso al tiempo real disponible (Tiempo Mínimo No Negociable):
+    // ~1.5 min por tarjeta (leer, pensar, calificar) es una estimación conservadora.
+    function startTMNNSession() {
+      const minutes = parseInt(document.getElementById('tmnn-minutes').value, 10) || 15;
+      sessionCardLimitOverride = Math.max(1, Math.round(minutes / 1.5));
+      currentCardIndex = 0;
+      switchTab('flashcards');
+    }
+
     // --- PREFERENCIAS DE INTERFAZ SINCRONIZADAS (semestre, pestañas, audio, cantidades PDF) ---
     // Se guardan todas juntas en una sola columna jsonb (user_profiles.preferences)
     // para no tener que crear una columna por cada ajuste.
@@ -2888,6 +3015,10 @@ Evalúa en máximo 4 párrafos concisos:
 
     // Solo devuelve las tarjetas del semestre filtrado cuyo nextReview ya llegó (<= hoy),
     // priorizando primero las de caja más baja (las que más lo necesitan).
+    // Límite de sesión activado desde el widget TMNN del dashboard de Inicio — pisa
+    // el límite del modo Turno cuando el usuario define explícitamente su tiempo real.
+    let sessionCardLimitOverride = null;
+
     function getFilteredFlashcards() {
       const filter = document.getElementById('flashcard-semester-filter')?.value || 'all';
       const today = todayISO();
@@ -2896,6 +3027,7 @@ Evalúa en máximo 4 párrafos concisos:
       deck = deck.sort((a, b) => (a.box || 1) - (b.box || 1));
       // En modo Turno: sesión corta, solo las que más lo necesitan (caja más baja primero).
       if (energyMode === 'shift') deck = deck.slice(0, SHIFT_MODE_CARD_LIMIT);
+      if (sessionCardLimitOverride) deck = deck.slice(0, sessionCardLimitOverride);
       return deck;
     }
 
@@ -3262,6 +3394,7 @@ Evalúa en máximo 4 párrafos concisos:
 
     // --- PERSONALIZACIÓN DE PESTAÑAS ---
     const TABS_CONFIG = [
+      { key: 'inicio', label: 'Inicio', icon: 'fa-solid fa-house text-indigo-300' },
       { key: 'atlas', label: 'Atlas 3D', icon: 'fa-solid fa-person-running text-rose-400' },
       { key: 'tutor', label: 'Tutor IA', icon: 'fa-solid fa-chalkboard-user text-violet-400' },
       { key: 'notebook', label: 'Notebook IA (PDF)', icon: 'fa-solid fa-book-bookmark text-amber-300' },
@@ -3315,7 +3448,7 @@ Evalúa en máximo 4 párrafos concisos:
     }
 
     // --- NAVEGACIÓN ---
-    let currentTab = 'atlas';
+    let currentTab = 'inicio';
 
     // Flechas de la barra de pestañas (solo escritorio) + scroll horizontal con la rueda del mouse
     function scrollTabsNav(direction) {
@@ -3360,7 +3493,7 @@ Evalúa en máximo 4 párrafos concisos:
 
     function switchTab(tab) {
       currentTab = tab;
-      ['atlas', 'tutor', 'notebook', 'cases', 'quiz', 'pae', 'calc', 'scales', 'labs', 'diagrams', 'flashcards', 'timer'].forEach(t => {
+      ['inicio', 'atlas', 'tutor', 'notebook', 'cases', 'quiz', 'pae', 'calc', 'scales', 'labs', 'diagrams', 'flashcards', 'timer'].forEach(t => {
         const el = document.getElementById(`view-${t}`);
         if (el) el.classList.add('hidden');
       });
@@ -3380,6 +3513,7 @@ Evalúa en máximo 4 párrafos concisos:
       else if (tab === 'calc') { calculateDripRate(); calculateDose(); }
       else if (tab === 'scales') { calculateGlasgow(); calculateApgar(); calculateEva(); calculateBraden(); }
       else if (tab === 'labs') renderLabTable();
+      else if (tab === 'inicio') renderDashboard();
     }
 
     // --- SEMESTRE ACTUAL ---
@@ -3810,6 +3944,7 @@ Evalúa en máximo 4 párrafos concisos:
       updateEnergyModeUI();
       applyVisibleTabsToNav();
       if (!visibleTabs.includes(currentTab)) switchTab(visibleTabs[0]);
+      else renderDashboard();
       updateTutorSpeakToggleUI();
       Object.keys(PDF_ACTION_QTY_DEFAULTS).forEach(type => {
         const input = document.getElementById(`qty-pdf-${type}`);
