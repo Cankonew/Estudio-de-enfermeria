@@ -961,6 +961,9 @@ graph TD
             <option value="7">Sem VII: Cuidado al Niño, Adolescente y Familia</option>
             <option value="8">Sem VIII: Gerencia Integral del Cuidado</option>
           </select>
+          <button onclick="toggleLearnMode()" id="btn-toggle-learn" class="bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2" title="Modo Aprender: opción múltiple con racha de aciertos">
+            <i class="fa-solid fa-gamepad"></i> <span class="hidden sm:inline">Modo Aprender</span>
+          </button>
           <button onclick="toggleProgressPanel()" id="btn-toggle-progress" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
             <i class="fa-solid fa-chart-simple"></i> <span class="hidden sm:inline">Progreso</span>
           </button>
@@ -996,6 +999,33 @@ graph TD
         <div id="all-caught-up-msg" class="hidden text-center py-16 bg-slate-900/40 border border-dashed border-emerald-800/60 rounded-2xl">
           <i class="fa-solid fa-circle-check text-4xl text-emerald-500 mb-3"></i>
           <p class="text-emerald-400 text-sm font-semibold">¡Ya repasaste todo por hoy! Vuelve mañana.</p>
+        </div>
+
+        <!-- MODO APRENDER: opción múltiple con racha de aciertos, estilo Quizlet.
+             Usa las mismas cajas Leitner por debajo — acertar avanza de caja igual
+             que en el modo tarjeta clásico, así lo divertido no reemplaza el repaso
+             inteligente, solo le cambia la forma. -->
+        <div id="learn-mode-viewport" class="hidden space-y-5">
+          <div class="flex justify-between items-center text-xs font-semibold px-1">
+            <span id="learn-progress" class="text-slate-400">Tarjeta 1 de 1</span>
+            <div class="flex items-center gap-3">
+              <span id="learn-streak" class="text-amber-400 flex items-center gap-1"><i class="fa-solid fa-fire"></i> 0</span>
+              <span id="learn-best-streak" class="text-slate-500">Mejor: 0</span>
+            </div>
+          </div>
+
+          <div class="bg-slate-900 border-2 border-indigo-500/40 rounded-2xl p-5 text-center">
+            <span id="learn-card-tag" class="text-xs bg-indigo-950 text-indigo-300 px-3 py-1 rounded-full font-medium"></span>
+            <p id="learn-question-text" class="text-lg font-bold text-white mt-3 px-2"></p>
+          </div>
+
+          <div id="learn-options" class="grid grid-cols-1 gap-2.5"></div>
+
+          <div class="text-center">
+            <div id="learn-streak-bar" class="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+              <div id="learn-streak-bar-fill" class="h-full bg-amber-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
         </div>
 
         <div id="card-viewport" class="hidden space-y-6">
@@ -2940,6 +2970,7 @@ Evalúa en máximo 4 párrafos concisos:
       renderBoxSummary();
 
       const container = document.getElementById('card-viewport');
+      const learnContainer = document.getElementById('learn-mode-viewport');
       const noCards = document.getElementById('no-cards-msg');
       const allCaughtUp = document.getElementById('all-caught-up-msg');
 
@@ -2949,21 +2980,38 @@ Evalúa en máximo 4 párrafos concisos:
 
       if (totalInFilter === 0) {
         container.classList.add('hidden');
+        learnContainer.classList.add('hidden');
         allCaughtUp.classList.add('hidden');
         noCards.classList.remove('hidden');
         return;
       }
       if (deck.length === 0) {
         container.classList.add('hidden');
+        learnContainer.classList.add('hidden');
         noCards.classList.add('hidden');
         allCaughtUp.classList.remove('hidden');
         return;
       }
 
-      container.classList.remove('hidden');
       noCards.classList.add('hidden');
       allCaughtUp.classList.add('hidden');
       if (currentCardIndex >= deck.length) currentCardIndex = 0;
+
+      if (learnModeActive) {
+        container.classList.add('hidden');
+        // El Modo Aprender necesita al menos 2 tarjetas para armar opciones múltiples.
+        if (flashcards.length < 2) {
+          learnContainer.classList.add('hidden');
+          container.classList.remove('hidden');
+        } else {
+          learnContainer.classList.remove('hidden');
+          renderLearnMode();
+        }
+        return;
+      }
+      learnContainer.classList.add('hidden');
+
+      container.classList.remove('hidden');
       const card = deck[currentCardIndex];
       document.getElementById('deck-progress').textContent = `Tarjeta ${currentCardIndex + 1} de ${deck.length} (Caja ${card.box || 1})`;
       document.getElementById('card-tag').textContent = card.tag;
@@ -3006,6 +3054,132 @@ Evalúa en máximo 4 párrafos concisos:
       if (currentCardIndex >= newDeck.length) currentCardIndex = 0;
       renderFlashcards();
       if (progressPanelOpen) renderProgressPanel();
+    }
+
+    // Aplica el mismo efecto de caja Leitner que rateCard(), reutilizable desde
+    // cualquier modo de estudio (clásico o Modo Aprender).
+    function applyLeitnerResult(card, knew) {
+      if (knew) {
+        card.box = Math.min((card.box || 1) + 1, 5);
+        card.nextReview = addDaysISO(LEITNER_INTERVALS[card.box]);
+      } else {
+        card.box = 1;
+        card.nextReview = addDaysISO(1);
+      }
+      saveData('flashcards');
+      upsertFlashcardToCloud(card);
+      if (progressPanelOpen) renderProgressPanel();
+    }
+
+    // --- MODO APRENDER (opción múltiple, estilo Quizlet) ---
+    let learnModeActive = false;
+    let learnStreak = 0;
+    let learnBestStreak = parseInt(localStorage.getItem('study_best_streak') || '0', 10);
+    let learnAnswered = false;
+
+    function toggleLearnMode() {
+      learnModeActive = !learnModeActive;
+      const btn = document.getElementById('btn-toggle-learn');
+      btn.className = learnModeActive
+        ? 'bg-indigo-600 text-white border border-indigo-500 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2'
+        : 'bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2';
+      learnStreak = 0;
+      renderFlashcards();
+    }
+
+    // Arma 3 respuestas incorrectas plausibles tomando el "back" de otras tarjetas —
+    // primero prioriza tarjetas de la misma materia (más parecidas y desafiantes),
+    // y si no hay suficientes, completa con cualquier otra tarjeta del mazo.
+    function buildLearnOptions(deck, correctCard) {
+      const pool = flashcards.filter(c => String(c.id) !== String(correctCard.id) && (c.back || '').trim());
+      const sameTag = pool.filter(c => c.tag === correctCard.tag);
+      const others = pool.filter(c => c.tag !== correctCard.tag);
+      const distractorSource = [...sameTag, ...others];
+
+      const seen = new Set([correctCard.back.trim().toLowerCase()]);
+      const distractors = [];
+      for (const c of distractorSource) {
+        const key = c.back.trim().toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        distractors.push(c.back);
+        if (distractors.length >= 3) break;
+      }
+
+      const options = [correctCard.back, ...distractors];
+      // Fisher-Yates para que la posición de la correcta sea aleatoria cada vez.
+      for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+      }
+      return options;
+    }
+
+    function renderLearnMode() {
+      const deck = getFilteredFlashcards();
+      if (currentCardIndex >= deck.length) currentCardIndex = 0;
+      const card = deck[currentCardIndex];
+      if (!card) return;
+
+      learnAnswered = false;
+      document.getElementById('learn-progress').textContent = `Tarjeta ${currentCardIndex + 1} de ${deck.length}`;
+      document.getElementById('learn-card-tag').textContent = card.tag + (card.topic ? ` · ${card.topic}` : '');
+      document.getElementById('learn-question-text').textContent = card.front;
+      document.getElementById('learn-streak').innerHTML = `<i class="fa-solid fa-fire"></i> ${learnStreak}`;
+      document.getElementById('learn-best-streak').textContent = `Mejor: ${learnBestStreak}`;
+      document.getElementById('learn-streak-bar-fill').style.width = Math.min(learnStreak * 10, 100) + '%';
+
+      const options = buildLearnOptions(deck, card);
+      const optionsEl = document.getElementById('learn-options');
+      optionsEl.innerHTML = options.map((opt, i) => `
+        <button onclick="answerLearnQuestion(${i})" data-option-index="${i}" data-correct="${opt === card.back ? 'true' : 'false'}"
+          class="learn-option-btn text-left text-sm bg-slate-900 border border-slate-700 hover:border-indigo-500 rounded-xl px-4 py-3 transition text-slate-200">
+          ${opt}
+        </button>
+      `).join('');
+    }
+
+    function answerLearnQuestion(optionIndex) {
+      if (learnAnswered) return;
+      learnAnswered = true;
+
+      const deck = getFilteredFlashcards();
+      const card = deck[currentCardIndex];
+      const buttons = document.querySelectorAll('.learn-option-btn');
+      const chosen = buttons[optionIndex];
+      const correct = chosen.dataset.correct === 'true';
+
+      buttons.forEach(b => {
+        b.disabled = true;
+        if (b.dataset.correct === 'true') {
+          b.className = 'learn-option-btn text-left text-sm bg-emerald-950 border-2 border-emerald-500 rounded-xl px-4 py-3 text-emerald-300 font-semibold';
+        } else if (b === chosen) {
+          b.className = 'learn-option-btn text-left text-sm bg-rose-950 border-2 border-rose-500 rounded-xl px-4 py-3 text-rose-300';
+        } else {
+          b.className = 'learn-option-btn text-left text-sm bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-slate-500 opacity-50';
+        }
+      });
+
+      if (correct) {
+        learnStreak++;
+        if (learnStreak > learnBestStreak) {
+          learnBestStreak = learnStreak;
+          localStorage.setItem('study_best_streak', learnBestStreak);
+        }
+      } else {
+        learnStreak = 0;
+      }
+      document.getElementById('learn-streak').innerHTML = `<i class="fa-solid fa-fire"></i> ${learnStreak}`;
+      document.getElementById('learn-best-streak').textContent = `Mejor: ${learnBestStreak}`;
+      document.getElementById('learn-streak-bar-fill').style.width = Math.min(learnStreak * 10, 100) + '%';
+
+      applyLeitnerResult(card, correct);
+
+      setTimeout(() => {
+        const newDeck = getFilteredFlashcards();
+        if (currentCardIndex >= newDeck.length - 1) currentCardIndex = 0; else currentCardIndex++;
+        renderFlashcards();
+      }, 1100);
     }
 
     // --- POMODORO ---
