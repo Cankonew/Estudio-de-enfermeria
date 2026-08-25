@@ -949,8 +949,8 @@ graph TD
           <h2 class="text-2xl font-bold text-white">Tarjetas de Memoria</h2>
           <p class="text-sm text-slate-400">Recuperación activa y repaso espaciado.</p>
         </div>
-        <div class="flex items-center gap-2">
-          <select id="flashcard-semester-filter" onchange="renderFlashcards()" class="max-w-[170px] truncate bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-2 focus:outline-none focus:border-indigo-500" title="Filtrar por núcleo temático">
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <select id="flashcard-semester-filter" onchange="renderFlashcards()" class="max-w-full sm:max-w-[170px] truncate bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl px-2.5 py-2 focus:outline-none focus:border-indigo-500" title="Filtrar por núcleo temático">
             <option value="all">Todos los núcleos</option>
             <option value="1">Sem I: Origen de la Vida</option>
             <option value="2">Sem II: Proceso Salud-Enfermedad I</option>
@@ -961,17 +961,17 @@ graph TD
             <option value="7">Sem VII: Cuidado al Niño, Adolescente y Familia</option>
             <option value="8">Sem VIII: Gerencia Integral del Cuidado</option>
           </select>
-          <button onclick="toggleLearnMode()" id="btn-toggle-learn" class="bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2" title="Modo Aprender: opción múltiple con racha de aciertos">
-            <i class="fa-solid fa-gamepad"></i> <span class="hidden sm:inline">Modo Aprender</span>
+          <button onclick="toggleLearnMode()" id="btn-toggle-learn" class="bg-indigo-950 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0" title="Modo Aprender: opción múltiple con racha de aciertos">
+            <i class="fa-solid fa-gamepad"></i> <span class="inline">Aprender</span>
           </button>
-          <button onclick="toggleProgressPanel()" id="btn-toggle-progress" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
-            <i class="fa-solid fa-chart-simple"></i> <span class="hidden sm:inline">Progreso</span>
+          <button onclick="toggleProgressPanel()" id="btn-toggle-progress" class="bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0">
+            <i class="fa-solid fa-chart-simple"></i> <span class="inline">Progreso</span>
           </button>
-          <button onclick="removeDuplicateFlashcards()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2" title="Detecta tarjetas con la misma materia, pregunta y respuesta, y deja solo una">
+          <button onclick="removeDuplicateFlashcards()" class="bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0" title="Detecta tarjetas con la misma materia, pregunta y respuesta, y deja solo una">
             <i class="fa-solid fa-broom"></i> <span class="hidden sm:inline">Quitar duplicados</span>
           </button>
-          <button onclick="toggleCardModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> Crear Manual
+          <button onclick="toggleCardModal(true)" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shrink-0">
+            <i class="fa-solid fa-plus"></i> <span class="inline">Crear</span>
           </button>
         </div>
       </div>
